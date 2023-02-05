@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
-from ..src.hot_spot_analysis import hot_spot_analysis
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
+from hot_spot_analysis.hot_spot_analysis import HotSpotAnalysis
 
 """ Create an instance of the HotSpotAnalysis class"""
-HSA = hot_spot_analysis.HotSpotAnalysis()
+HSA = HotSpotAnalysis()
 
 
 # ! ----------------------------------------------------------------------------------------------
 #%%
-import seaborn as sns
 
 ## Load data from seaborn
 df = sns.load_dataset("diamonds")
@@ -32,7 +35,7 @@ df.head()
 
 #%%
 #! Define a HSA object!
-#HSA = HotSpotAnalysis()
+# HSA = HotSpotAnalysis()
 HSA.data_cuts = df_key_vars
 HSA.depth_limit = 4
 HSA.data = df
