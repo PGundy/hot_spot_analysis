@@ -1,8 +1,0 @@
-version: '3.4'
-
-services:
-  hotspotanalysis:
-    image: hotspotanalysis
-    build:
-      context: .
-      dockerfile: ./Dockerfile

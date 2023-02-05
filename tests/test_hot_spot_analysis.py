@@ -1,13 +1,15 @@
+#%%
+
 from __future__ import annotations
 
-from hot_spot_analysis import HotSpotAnalysis
+from ..src.hot_spot_analysis import hot_spot_analysis
 
 """ Create an instance of the HotSpotAnalysis class"""
-hsa = HotSpotAnalysis()
+HSA = hot_spot_analysis.HotSpotAnalysis()
 
 
 # ! ----------------------------------------------------------------------------------------------
-
+#%%
 import seaborn as sns
 
 ## Load data from seaborn
@@ -30,7 +32,7 @@ df.head()
 
 #%%
 #! Define a HSA object!
-HSA = HotSpotAnalysis()
+#HSA = HotSpotAnalysis()
 HSA.data_cuts = df_key_vars
 HSA.depth_limit = 4
 HSA.data = df
