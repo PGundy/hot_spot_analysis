@@ -1,6 +1,7 @@
 # %%
 import itertools
 import warnings
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -411,12 +412,12 @@ class HotSpotAnalysis:
 
     def filter_hsa_data(
         self,
-        target_var: str | None = None,
+        target_var: Union[str, None] = None,
         search_terms="",  # This works, but it kind of sucks
         # ! search_terms: str | list[str] | None = None
         # ! Try to get the above working!
-        search_type: str | None = None,
-        depth_filter: int | None = None,
+        search_type: Union[str, None] = None,
+        depth_filter: Union[int, None] = None,
         data: pd.DataFrame = None,
     ):
         """
