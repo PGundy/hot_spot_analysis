@@ -194,9 +194,9 @@ class HotSpotAnalysis:
                 unique_list.append(item)
         return unique_list
 
-    def test_user_agg_function(self, user_agg_function):
+    def test_user_function(self, user_function):
         """
-        Run the user_agg_function on the data provided. If not
+        Run the user_function on the data provided. If not
         grouped it creates a constant 'All Rows' to maintain
         a consistent data structure as the hot spot
         analysis output.
@@ -213,11 +213,11 @@ class HotSpotAnalysis:
         grouping_vars = self._remove_none_in_list(grouping_vars)
         data = data.groupby(grouping_vars)
 
-        print("\n\nBelow is the output of the user_agg_function:")
-        return user_agg_function(data)
+        print("\n\nBelow is the output of the user_function:")
+        return user_function(data)
 
-    # Iterate using user_agg_function & data using groupby(Combos)
-    def run_hsa(self, user_agg_function):
+    # Iterate using user_function & data using groupby(Combos)
+    def run_hsa(self, user_function):
         """
         The primary function for user. This runs the entire
         hot spot analysis after creating the combos
@@ -247,7 +247,7 @@ class HotSpotAnalysis:
 
             # Run the calculations for each step
             result = []
-            result = user_agg_function(dataObj)
+            result = user_function(dataObj)
 
             # Create variables to create 'clean' columns
             result_col_names = list(result.columns)

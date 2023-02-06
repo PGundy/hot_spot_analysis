@@ -12,7 +12,7 @@ from hot_spot_analysis.hot_spot_analysis import HotSpotAnalysis
 HSA = HotSpotAnalysis()
 
 
-# ! ----------------------------------------------------------------------------------------------
+# ! ---------------------------------------------------------------------------------
 #%%
 
 ## Load data from seaborn
@@ -57,11 +57,11 @@ def exampleFunction(data):
 
 
 #! Is our function going to work for the full HSA?
-HSA.test_user_agg_function(exampleFunction)
+HSA.test_user_function(exampleFunction)
 
 #%%
 #! Run the HSA
-HSA.run_hsa(user_agg_function=exampleFunction)
+HSA.run_hsa(user_function=exampleFunction)
 
 #! View the output data
 HSAdata = HSA.get_hsa_data()
