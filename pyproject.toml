@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hot-spot-analysis"
-version = "0.1.0"
+version = "0.1.1"
 description = "An analytic reporting framework that removes any statitical ambiguity. This is achieved by taking an user provided function to calculate their metrics, running the function on combinations of user provided features, and then struturing the output into a tabular-ish data structure. The output data can be used to enhance reporting, find insights, and easily dive further into the 'why' metrics have shifted."
 authors = ["Philip Gundy <philipgundy@gmail.com>"]
 readme = "README.md"

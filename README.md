@@ -8,12 +8,12 @@ The output data can be used to enhance reporting, find insights, and easily dive
 ## Short Theoretical Demonstration:
 
 If we have 3 columns [a, b, c], and we want to cut our data using those columns we would have to group our data as such to know all of the interactions' impact on our metric of interst. And this problem becomes increasingly complicated as we increase the number of columns. 
-### Using 3 columns:
 
+**Using 3 columns:**
 [a, b, c] -> 7 valid data cuts
-  - @ a depth of 1: [a,b,c] <- 3 data cuts
-  - @ a depth of 2: [ab,ac,bc] <- 3 data cuts
-  - @ a depth of 3: [abc] <- 1 data cuts
+  - @ depth = 1: [a,b,c] <- 3 data cuts
+  - @ depth = 2: [ab,ac,bc] <- 3 data cuts
+  - @ depth = 3: [abc] <- 1 data cuts
 
 ***Note*** each column could have any number of valid values (ie rows when aggregated), thus 'ab' could be more accurately represented as a<sub>x</sub> * b<sub>y</sub> rows in the output. 
 
