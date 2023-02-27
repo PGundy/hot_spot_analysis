@@ -201,7 +201,11 @@ class HotSpotAnalysis:
         a consistent data structure as the hot spot
         analysis output.
 
-        Returns a pd.DataFrame.
+        Arguments:
+            user_function: an user defined function.
+
+        Returns:
+            a pd.DataFrame()
         """
         if self._is_data_grouped():
             data = self.data.obj
@@ -224,7 +228,11 @@ class HotSpotAnalysis:
         (and validating the inputs). The user will see
         each step print as it begins running to help monitor progress.
 
-        Returns nothing; Creates self._outputHSA.
+        Arguments:
+            user_function: an user defined function.
+
+        Returns:
+            Nothing. Runs the hot spot analysis, and saves the output.
         """
 
         # Create the backbone of the analysis
@@ -312,7 +320,8 @@ class HotSpotAnalysis:
         """
         Export _outputHSA after running hsa.run_hsa()
 
-        Returns pd.DataFrame()
+        Returns:
+            a pd.DataFrame()
         """
         return self._outputHSA
 
@@ -356,7 +365,8 @@ class HotSpotAnalysis:
         """
         Return the data_cuts at the most broad depth level.
 
-        return pd.DataFrame.
+        Returns:
+            a pd.DataFrame()
         """
         key_variables = ["depth", "data_cuts"]
         filter_by = self._outputHSA["depth"].isin(
@@ -381,7 +391,8 @@ class HotSpotAnalysis:
         Return the data_content for the provided data_cut. If no data_cut
         is provided then it returns the possible and valid data_cuts.
 
-        return pd.DataFrame.
+        Returns:
+            a pd.DataFrame()
         """
         if isinstance(data_cut, str):
             data_cut = [data_cut]
@@ -428,7 +439,8 @@ class HotSpotAnalysis:
         Note: If you save the output of this function then
         you can pass that initial search into a second search.
 
-        Returns a pd.DataFrame.
+        Returns:
+            a pd.DataFrame()
         """
         if data is None:
             df = self._outputHSA

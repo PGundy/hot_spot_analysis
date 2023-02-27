@@ -8,11 +8,11 @@ import seaborn as sns
 
 from hot_spot_analysis.hot_spot_analysis import HotSpotAnalysis
 
-""" Create an instance of the HotSpotAnalysis class"""
+# Create an instance of the HotSpotAnalysis class
 HSA = HotSpotAnalysis()
 
 
-# ! ---------------------------------------------------------------------------------
+# ! -------------------------------------------------------------------------
 #%%
 
 ## Load data from seaborn
@@ -20,6 +20,7 @@ df = sns.load_dataset("diamonds")
 
 ## Funtionally get categorical variables: ['cut', 'color', 'clarity']
 df_key_vars = list(df.select_dtypes(include=["category"]).columns)
+
 
 ## Let's create a fake cohort variable; 'retailer'
 df["retailer"] = df.reset_index()["index"]
@@ -39,10 +40,10 @@ df.head()
 HSA.data_cuts = df_key_vars
 HSA.depth_limit = 4
 HSA.data = df
-# HSA.data = df.groupby(["retailer"])
+# HSA.data = df.groupby(["retailer"]) # NOTE: uncomment for a more complex example
 
 
-#! Here we have a function that calculates out key metrics
+#! Here we have a function that calculates our key metrics via pandas
 def exampleFunction(data):
 
     data = data.agg(
@@ -88,7 +89,6 @@ TEMP.head()
 
 
 #%%
-
 #! Search across the data
 HSA.filter_hsa_data(
     target_var="data_cut_content",
@@ -119,3 +119,5 @@ HSA.filter_hsa_data(
 
 # %%
 print("everything ran as expected.")
+
+# %%

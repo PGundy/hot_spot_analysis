@@ -1,15 +1,15 @@
 [tool.poetry]
 name = "hot-spot-analysis"
-version = "0.1.1"
-description = "An analytic reporting framework that removes any statitical ambiguity. This is achieved by taking an user provided function to calculate their metrics, running the function on combinations of user provided features, and then struturing the output into a tabular-ish data structure. The output data can be used to enhance reporting, find insights, and easily dive further into the 'why' metrics have shifted."
+version = "0.1.2"
+description = "Hot Spot Analysis (HSA) is an analytic reporting framework that removes any statitical ambiguity. HSA is meant to enhance reporting, find insights, and easily dive further into the 'why' metrics have shifted. This is done by automatically running all viable cuts within the data across the provided features for any metrics."
 authors = ["Philip Gundy <philipgundy@gmail.com>"]
 readme = "README.md"
 packages = [{include = "hot_spot_analysis"}]
 
 [tool.poetry.dependencies]
-python = "^3.9"
-pandas = "^1.5.3"
-numpy = "^1.24.2"
+python = ">= 3.7.1"
+pandas = ">=1.3.5"
+numpy = ">= 1.21"
 seaborn = "^0.12.2"
 
 

@@ -1,9 +1,7 @@
 
 # Overview
 
-An analytic reporting framework that removes any statitical ambiguity. This is achieved by taking an user provided function to calculate their metrics, running the function on combinations of user provided features, and then struturing the output into a tabular-ish data structure. 
-
-The output data can be used to enhance reporting, find insights, and easily dive further into the 'why' metrics have shifted.
+Hot Spot Analysis (HSA) is an analytic reporting framework that removes any statitical ambiguity. HSA is meant to enhance reporting, find insights, and easily dive further into the 'why' metrics have shifted. This is done by automatically running all viable cuts within the data across the provided features for any metrics.
 
 ## Short Theoretical Demonstration:
 
@@ -15,7 +13,19 @@ If we have 3 columns [a, b, c], and we want to cut our data using those columns 
   - @ depth = 2: [ab,ac,bc] <- 3 data cuts
   - @ depth = 3: [abc] <- 1 data cuts
 
-***Note*** each column could have any number of valid values (ie rows when aggregated), thus 'ab' could be more accurately represented as a<sub>x</sub> * b<sub>y</sub> rows in the output. 
+**HSA Output Data Structure:**
+
+| index | depth | data_cuts         | data_content        | data_cut_content      | user function output |
+| ----- | ----- | ----------------- | ------------------- | --------------------- | -------------------- |
+| 1     | 1     | [column a]        | [row_value x]       | ['a:x']               | [Int/float/etc.]     |
+| 2     | 1     | [column b]        | [row_value y]       | ['b:y']               | [Int/float/etc.]     |
+| 3     | 1     | [column c]        | [row_value z]       | ['b:y']               | [Int/float/etc.]     |
+| 4     | 2     | [Columns a, b]    | [row_value x, y]    | ['a:x', 'b:y']        | [Int/float/etc.]     |
+| 5     | 2     | [Columns a, c]    | [row_value x, z]    | ['a:x', 'c:z']        | [Int/float/etc.]     |
+| 6     | 2     | [Columns c, b]    | [row_value y, z]    | ['b:y', 'c:z']        | [Int/float/etc.]     |
+| 7     | 3     | [Columns a, b, c] | [row_value x, y, z] | ['a:x', 'b:y', 'c:z'] | [Int/float/etc.]     |
+
+***Note*** Each column yields rows equal the number of unique values. Thus 'ab' woudl yield a<sub>N</sub> * b<sub>M</sub> rows in the output where column a has N unique values, and column B has M unique values thus ab yields N*M rows.
 
 
 # An Example:
@@ -46,7 +56,7 @@ titanic = df[['survived', 'class',  'adult_male', 'embark_town']]
 
 # Define our metric function
 def survival_rate(data):
-    temp = data.agg(survived = pd.NamedAgg('survived', np.mean))
+    temp = data.agg(survival_rate = pd.NamedAgg('survived', np.mean))
     return temp
 
 # Input our data cuts, depth limit, and data
@@ -75,16 +85,8 @@ hsa.filter_hsa_data(
 
 ```
 
-Using hot spot analysis we can get the following structure which scales exceptionally well as we increate the number of data cuts and interactions.
 
-| depth | data_cuts        | data_content   | data_cut_content | output columns from user function |
-| ----- | ---------------- | -------------- | ---------------- | --------------------------------- |
-| 1     | [1 Column_Name]  | [1 row_value]  | [1 [column:row]] | [Int/float/etc.]                  |
-| 2     | [2 Column_Names] | [2 row_values] | [2 [column:row]] | [Int/float/etc.]                  |
-	
-
-
-## Basic (mostly) pandas method
+## A (mostly) basic pandas demo - without HSA
 
 Does using hot_spot_analysis actually make life that much easier?
 YES.
@@ -100,21 +102,35 @@ df = sb.load_dataset('titanic')
 titanic = df[['survived', 'class',  'adult_male', 'embark_town']]
 
 def survival_rate(data):
-    temp = data.agg(survived = pd.NamedAgg('survived', np.mean))
+    temp = data.agg(survival_rate = pd.NamedAgg('survived', np.mean))
     return temp
 
 titanic_by_class = survival_rate(titanic.groupby('class'))
 titanic_by_adult_male = survival_rate(titanic.groupby('adult_male'))
 titanic_by_embark_town = survival_rate(titanic.groupby('embark_town'))
+titanic_by_class_adult_male = survival_rate(titanic.groupby(['class', 'adult_male']))
+titanic_by_class_embark_town = survival_rate(titanic.groupby(['class', 'embark_town']))
+titanic_by_adult_male_embark_town = survival_rate(titanic.groupby(['adult_male', 'embark_town']))
+titanic_by_all = survival_rate(titanic.groupby(['class', 'adult_male', 'embark_town']))
 
-# Then manually having to add the intersectionality of these features
-titanic_by_embark_town = survival_rate(titanic.groupby(['class', 'adult_male', 'embark_town']))
+# Combine the data frames
+dfs = [
+    titanic_by_class,
+    titanic_by_adult_male,
+    titanic_by_embark_town,
+    titanic_by_class_adult_male,
+    titanic_by_class_embark_town,
+    titanic_by_adult_male_embark_town,
+    titanic_by_all
+]
 
-## Even employing a loop these data objects do not align well to be joined and compare across groups.
-print(titanic_by_embark_town)
+all_df = pd.concat(dfs, join='outer', axis=1).fillna(np.NaN)
+
+# Review some of the features
+print(all_df.head())
+print(all_df.tail())
 
 
-# And now we have all the data, but in 7 dataframes with no clean key to combine.
 
 ```
 
