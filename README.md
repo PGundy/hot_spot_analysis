@@ -3,6 +3,11 @@
 
 Hot Spot Analysis (HSA) is an analytic reporting framework that removes any statitical ambiguity. HSA is meant to enhance reporting, find insights, and easily dive further into the 'why' metrics have shifted. This is done by automatically running all viable cuts within the data across the provided features for any metrics.
 
+## Future updates plan to add the following functionality:
+- multiprocessing to improve module calculation speed
+- support for non-dataframe user functions (graphs, etc.)
+
+
 ## Short Theoretical Demonstration:
 
 If we have 3 columns [a, b, c], and we want to cut our data using those columns we would have to group our data as such to know all of the interactions' impact on our metric of interst. And this problem becomes increasingly complicated as we increase the number of columns. 
@@ -25,7 +30,7 @@ If we have 3 columns [a, b, c], and we want to cut our data using those columns 
 | 6     | 2     | [Columns c, b]    | [row_value y, z]    | ['b:y', 'c:z']        | [Int/float/etc.]     |
 | 7     | 3     | [Columns a, b, c] | [row_value x, y, z] | ['a:x', 'b:y', 'c:z'] | [Int/float/etc.]     |
 
-***Note*** Each column yields rows equal the number of unique values. Thus 'ab' woudl yield a<sub>N</sub> * b<sub>M</sub> rows in the output where column a has N unique values, and column B has M unique values thus ab yields N*M rows.
+***Note:*** Each column yields X rows equal determined by number of unique values. Thus 'ab' woudl yield a<sub>N</sub> * b<sub>M</sub> rows in the output where column a has N unique values, and column B has M unique values thus ab yields N*M rows.
 
 
 # An Example:
@@ -36,14 +41,13 @@ Using the titanic data from seaborn we can look at a semi-practical example usin
 | -------- | ----- | ---------- | ----------- |
 | 0        | Third | True       | Southampton |
 | 1        | First | False      | Cherbourg   |
-| 1        | Third | False      | Southampton |
 | 1        | First | False      | Southampton |
-| 0        | Third | True       | Southampton |
+| 0        | Third | True       | Queenstown  |
 *for each of the 891 passengers on the titanic*
 
 
 
-## Basic hot_spot_analysis method:
+## A Simple Example Using hot_spot_analysis:
 ```
 import numpy as np
 import pandas as pd
@@ -77,16 +81,15 @@ print(hsa_output.head())
 print(hsa_output.tail())
 
 # Or use some of the built in search features
-hsa.filter_hsa_data(
+hsa.search_hsa_data(
     target_var = 'data_content', 
     search_terms = 'Southampton'
     )
 
-
 ```
 
 
-## A (mostly) basic pandas demo - without HSA
+## A (mostly) pandas example without hot_spot_analysis:
 
 Does using hot_spot_analysis actually make life that much easier?
 YES.

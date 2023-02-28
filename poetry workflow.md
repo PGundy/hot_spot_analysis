@@ -26,6 +26,10 @@ This is Philip Gundy's notes on his personal (imperfect) workflow with poetry.
     1.  Ensure environment variables are working:
         1.  `$TEST_PYPI_USERNAME` & `$TEST_PYPI_PASSWORD`
             1.  `export TEST_PYPI_USERNAME=pgundy93_test`
-            2. NOTE: PASSWORD is an API token! `export TEST_PYPI_PASSWORD=pypi-AgENdGVzdC5weXBpLm9yZwIkMTY2OWY1YjctMDE1Ni00OTMxLThjODQtZDVhODllZjcxYzU2AAIqWzMsImNiZDdiYWU5LTAzZDgtNDdmZC04NmYzLTA5ZDUyMzUxMzExOCJdAAAGIET5KteLXlhcaXQdcV5-26UsBqGSWNwkuNkm5rmzP-Fw`
+            2. NOTE: PASSWORD is an API token! `export TEST_PYPI_PASSWORD=1HSAteat!`
 13. run `poetry publish -r testpypi --username $TEST_PYPI_USERNAME --password $TEST_PYPI_PASSWORD` <- BIG STEP
-    1.  Check that the package was updated as intended
+    1.  Check PyPi test: `https://test.pypi.org/project/hot-spot-analysis/`
+
+14. continue to repeat and bump the version up in the ``project.toml` file.
+
+15. TODO: replace this with the actual command to publish the package to PyPi proper

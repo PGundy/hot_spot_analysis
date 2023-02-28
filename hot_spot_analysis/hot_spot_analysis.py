@@ -421,12 +421,12 @@ class HotSpotAnalysis:
 
         return output_data
 
-    def filter_hsa_data(
+    def search_hsa_data(
         self,
         target_var: Union[str, None] = None,
-        search_terms="",  # This works, but it kind of sucks
+        search_terms="",  # This works, but it kind of sucks...
         # ! search_terms: str | list[str] | None = None
-        # ! Try to get the above working!
+        # ! Try to get the above working! Problem is
         search_type: Union[str, None] = None,
         depth_filter: Union[int, None] = None,
         data: pd.DataFrame = None,

@@ -6,7 +6,11 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+# if you cloned the repo locally use the following line
 from hot_spot_analysis.hot_spot_analysis import HotSpotAnalysis
+
+# # Otherwise you will have to have run `pip install hot_spot_analysis`
+# from hot_spot_analysis import HotSpotAnalysis
 
 # Create an instance of the HotSpotAnalysis class
 HSA = HotSpotAnalysis()
@@ -90,7 +94,7 @@ TEMP.head()
 
 #%%
 #! Search across the data
-HSA.filter_hsa_data(
+HSA.search_hsa_data(
     target_var="data_cut_content",
     search_terms="color: G",
     search_type="broad",
@@ -102,13 +106,13 @@ HSA.filter_hsa_data(
 ### THUS we now have 'color: G' & 'cut: Very Good' at depth 2 &
 ### all level 3 interactions contain BOTH 'color: G' & 'cut: Very Good'
 
-df_chain_filtering = HSA.filter_hsa_data(
+df_chain_filtering = HSA.search_hsa_data(
     target_var="data_cut_content",
     search_terms="color: G",
     search_type="broad",
 )
 
-HSA.filter_hsa_data(
+HSA.search_hsa_data(
     target_var="data_cut_content",
     search_terms="cut: Very Good",
     search_type="broad",
