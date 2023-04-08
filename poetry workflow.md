@@ -15,21 +15,23 @@ This is Philip Gundy's notes on his personal (imperfect) workflow with poetry.
     1.  If not change environments: `poetry env use <FULL PATH TO ALTERNATIVE ENV>`
     2.  if you don't know the path then run `poetry env info` and use that path to navigate to the desired exec path
 4.  run `poetry update`
-5.  11. run `pytest` <- ensure all tests pass
-6.  run `poetry version` 
-7.  run `poetry check`
-8.  run `poetry build`
-9.  run `poetry check`
-10. run `poetry show`
-11. run `poetry export` <- not strictly needed because the dependancies are NOT locked
-12. Export to PyPi test site: `https://test.pypi.org/project/hot-spot-analysis/`
+    1.  run `pytest` <- ensure all tests pass
+5.  run `poetry version` 
+6.  run `poetry check`
+7.  run `poetry build`
+8.  run `poetry check`
+9.  run `poetry show`
+10. run `poetry export` <- not strictly needed because the dependancies are NOT locked
+11. Export to PyPi test site: `https://test.pypi.org/project/hot-spot-analysis/`
     1.  Ensure environment variables are working:
         1.  `$TEST_PYPI_USERNAME` & `$TEST_PYPI_PASSWORD`
             1.  `export TEST_PYPI_USERNAME=pgundy93_test`
             2. NOTE: PASSWORD is an API token! `export TEST_PYPI_PASSWORD=1HSAteat!`
-13. run `poetry publish -r testpypi --username $TEST_PYPI_USERNAME --password $TEST_PYPI_PASSWORD` <- BIG STEP
+12. run `poetry publish -r testpypi --username $TEST_PYPI_USERNAME --password $TEST_PYPI_PASSWORD --build` <- BIG STEP
     1.  Check PyPi test: `https://test.pypi.org/project/hot-spot-analysis/`
 
-14. continue to repeat and bump the version up in the ``project.toml` file.
+13. continue to repeat and bump the version up in the ``project.toml` file.
 
-15. TODO: replace this with the actual command to publish the package to PyPi proper
+14. Upload to PyPi proper
+    1.  `poetry publish --build --dry-run`
+    2.  `poetry publish --username PGundy93 --password <UPDATE WITH REAL PASSWORD>`

@@ -1,5 +1,6 @@
 
 # Overview
+tldr: Do you hate trying to breakdown which underlying trends or movements are driving topline metric movements? HSA can solve that.
 
 Hot Spot Analysis (HSA) is an analytic reporting framework that removes any statitical ambiguity. HSA is meant to enhance reporting, find insights, and easily dive further into the 'why' metrics have shifted. This is done by automatically running all viable cuts within the data across the provided features for any metrics.
 
@@ -10,7 +11,7 @@ Hot Spot Analysis (HSA) is an analytic reporting framework that removes any stat
 
 ## Short Theoretical Demonstration:
 
-If we have 3 columns [a, b, c], and we want to cut our data using those columns we would have to group our data as such to know all of the interactions' impact on our metric of interst. And this problem becomes increasingly complicated as we increase the number of columns. 
+If we have 3 columns [a, b, c], and we want to cut our data using those columns we would have to group our data as such to know all of the interactions' impact on our metric of interest. And this problem becomes increasingly complicated as we increase the number of columns. 
 
 **Using 3 columns:**
 [a, b, c] -> 7 valid data cuts
@@ -24,13 +25,13 @@ If we have 3 columns [a, b, c], and we want to cut our data using those columns 
 | ----- | ----- | ----------------- | ------------------- | --------------------- | -------------------- |
 | 1     | 1     | [column a]        | [row_value x]       | ['a:x']               | [Int/float/etc.]     |
 | 2     | 1     | [column b]        | [row_value y]       | ['b:y']               | [Int/float/etc.]     |
-| 3     | 1     | [column c]        | [row_value z]       | ['b:y']               | [Int/float/etc.]     |
+| 3     | 1     | [column c]        | [row_value z]       | ['c:z']               | [Int/float/etc.]     |
 | 4     | 2     | [Columns a, b]    | [row_value x, y]    | ['a:x', 'b:y']        | [Int/float/etc.]     |
 | 5     | 2     | [Columns a, c]    | [row_value x, z]    | ['a:x', 'c:z']        | [Int/float/etc.]     |
-| 6     | 2     | [Columns c, b]    | [row_value y, z]    | ['b:y', 'c:z']        | [Int/float/etc.]     |
+| 6     | 2     | [Columns b, c]    | [row_value y, z]    | ['b:y', 'c:z']        | [Int/float/etc.]     |
 | 7     | 3     | [Columns a, b, c] | [row_value x, y, z] | ['a:x', 'b:y', 'c:z'] | [Int/float/etc.]     |
 
-***Note:*** Each column yields X rows equal determined by number of unique values. Thus 'ab' woudl yield a<sub>N</sub> * b<sub>M</sub> rows in the output where column a has N unique values, and column B has M unique values thus ab yields N*M rows.
+***Note:*** Each column yields X rows determined by the number of unique values. Thus 'ab' would yield a<sub>N</sub> * b<sub>M</sub> rows in the output where column a has N unique values, and column B has M unique values thus ab yields N*M rows.
 
 
 # An Example:
