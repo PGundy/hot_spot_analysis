@@ -44,7 +44,7 @@ class HotSpotAnalysis:
         if self.data_cuts != list_funcs._make_list_unique(self.data_cuts):
             raise ValueError(
                 """data_cuts contains unexpected elements. 
-                Remove duplicate elements to resolve error.
+                Duplicate elements in data_cuts are not allowed.
                 """
             )
 
