@@ -46,7 +46,7 @@ def _add_to_groupby(dataframe: pd.DataFrame(), input_list: list):
     Returns a dataframe with modified groups.
     """
     # list <- list of vars to group by
-    if _is_data_grouped():
+    if _is_data_grouped(dataframe):
         inputGrps = _get_data_group_by(dataframe)
 
         if len(inputGrps) > 1:
