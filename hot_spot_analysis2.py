@@ -6,7 +6,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
-from utils import combos, list_funcs
+from utils import combos, list_funcs, validators
 
 # %%
 
@@ -25,6 +25,9 @@ class HotSpotAnalysis:
         self.data = data
         self.data_cuts = data_cuts
         self.depth_limit = depth_limit
+
+        # Set defaults for internal references
+        self.combinations = []
 
     ## TODO: MIGRATE FUNCTIONS TO THE FOLLOWING:
     #! check_inputs
@@ -84,19 +87,72 @@ class HotSpotAnalysis:
                 """
             )
 
-    #! setup
+    #! prepare (backend)
     def create_combos(self):
-        self._combinations = combos._create_combos(
+        self.combinations = combos._create_combos(
             self.data_cuts, self.depth_limit
         )
 
+    #! setup
     def setup(self):
+        self._check_inputs()
         self.create_combos()
 
+    #! validate
+    def validate_metric_function(self, user_metric_function):
+        """
+        Run the user_metric_function on the data provided. If not
+        grouped it creates a constant 'All Rows' to maintain
+        a consistent data structure as the hot spot
+        analysis output.
+
+        Arguments:
+            user_metric_function: an user defined function.
+
+        Returns:
+            a pd.DataFrame()
+        """
+        if validators._is_data_grouped(self.data):
+            data = self.data.obj
+        else:
+            data = self.data
+
+        data = data.iloc[0:1].copy()
+
+        data["All Rows"] = "All Rows"
+        grouping_vars = ["All Rows"]
+        data = data.groupby(grouping_vars)
+
+        try:
+            user_metric_function(data)
+            did_func_run = True
+        except:
+            did_func_run = False
+
+        return did_func_run
+
+    def validate(self, metric_function):
+        if self.validate_metric_function(metric_function):
+            print("validate: true")
+        else:
+            print("validate: false")
+
+    def run_analysis(self, user_function):
+        self.setup()
+        self.data_analyzed = combos.analyze(
+            data=self.data,
+            combos=self.combinations,
+            analysis_function=user_function,
+        )
+
+    #! export
     def export_combos(self):
-        if self._combinations == []:
+        if self.combinations == []:
             self.create_combos()
-        return self._combinations
+        return self.combinations
+
+    def export_analyzed_data(self):
+        return self.data_analyzed
 
 
 # %%
@@ -105,9 +161,32 @@ import seaborn as sb
 
 df = sb.load_dataset("tips")
 
-test = HotSpotAnalysis(data=df, data_cuts=["day", "smoker"], depth_limit=9)
+test = HotSpotAnalysis(data=df, data_cuts=["day", "smoker"], depth_limit=2)
 
-test._check_inputs()
+test.setup()
+
+import numpy as np
+import pandas as pd
+import seaborn as sb
+
+df = sb.load_dataset("tips")
+
+
+def tip_stats(df):
+    result = df.agg(
+        count=pd.NamedAgg("tip", "count"),
+        min=pd.NamedAgg("tip", "min"),
+        max=pd.NamedAgg("tip", "max"),
+        max_total_bill=pd.NamedAgg("total_bill", "max"),
+    )
+    return result
+
+
+# tip_stats(df)
+
+test.run_analysis(user_function=tip_stats)
+test.export_analyzed_data()
+
 
 # %%
 
