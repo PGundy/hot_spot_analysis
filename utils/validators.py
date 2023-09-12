@@ -15,9 +15,6 @@ def _is_data_grouped(dataframe: pd.DataFrame()):
     Check if the data argument is grouped.
     Returns boolean.
     """
-    if dataframe.empty:
-        raise ValueError("dataframe is empty.")
-
     return hasattr(dataframe, "groups")
 
 
@@ -34,6 +31,15 @@ def _get_data_group_by(dataframe: pd.DataFrame()):
         return group_vars
     else:
         return [None]
+
+
+def return_data_obj(dataframe: pd.DataFrame):
+    if _is_data_grouped(dataframe):
+        data_obj = dataframe.obj
+    else:
+        data_obj = dataframe
+
+    return data_obj
 
 
 def _add_to_groupby(dataframe: pd.DataFrame(), input_list: list):
@@ -57,4 +63,5 @@ def _add_to_groupby(dataframe: pd.DataFrame(), input_list: list):
     else:
         grpVarList = input_list
 
-    return dataframe.groupby(grpVarList)
+    data_obj = return_data_obj(dataframe)
+    return data_obj.groupby(grpVarList)

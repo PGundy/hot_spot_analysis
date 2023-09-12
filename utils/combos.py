@@ -48,7 +48,9 @@ def _create_combos(
     return combination_final
 
 
-def analyze(data: pd.DataFrame, combos: list, analysis_function):
+def analyze(dataframe: pd.DataFrame, combos: list, analysis_function):
+    data = dataframe
+
     results = []
     total_steps = len(combos) - 1
     for step_i, grp_var_i in enumerate(combos):
