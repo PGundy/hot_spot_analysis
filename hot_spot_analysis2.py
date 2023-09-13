@@ -181,6 +181,25 @@ class HotSpotAnalysis:
 
         return df_cuts
 
+    def export_data_content(self):
+        ## TODO: Move this into reporting!
+        # TODO: migrate the function from hot_spot_analysis.py
+        return None
+
+    def search_hsa(
+        self,
+        target_var: Union[str, None] = None,
+        search_terms="",  # This works, but it kind of sucks...
+        # ! search_terms: str | list[str] | None = None
+        # ! Try to get the above working! Problem is
+        search_type: Union[str, None] = None,
+        depth_filter: Union[int, None] = None,
+        data: pd.DataFrame = None,
+    ):
+        ## TODO: move this into reporting
+        # TODO: migrate this function from hot_spot_analysis.py
+        return None
+
 
 # %%
 
@@ -195,7 +214,7 @@ df = pd.concat(dfs)
 df.info()
 
 df_prepared = df
-df_prepared = df.groupby("sex")
+# df_prepared = df.groupby("sex")
 
 test = HotSpotAnalysis(
     data=df_prepared, data_cuts=["day", "smoker"], depth_limit=2
