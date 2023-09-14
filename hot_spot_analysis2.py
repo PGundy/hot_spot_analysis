@@ -169,22 +169,62 @@ class HotSpotAnalysis:
         row_filter = data["depth"].isin([ideal_depth])
 
         df_cuts = data[row_filter][key_vars]
-        df_cuts["data_cuts"] = df_cuts["data_cuts"].apply(
-            lambda x: list_funcs._list_to_string(x)
+        df_cuts["data_cuts"] = pd.Series(
+            [list_funcs._list_to_string(x) for x in df_cuts["data_cuts"]]
         )
 
         df_cuts = df_cuts.explode("data_cuts").value_counts().reset_index()
         df_cuts.columns = key_vars + ["unique_values"]
-        df_cuts["data_cuts"] = df_cuts["data_cuts"].apply(
-            lambda x: list_funcs._string_to_list(x)
+        df_cuts["data_cuts"] = pd.Series(
+            [list_funcs._string_to_list(x) for x in df_cuts["data_cuts"]]
         )
 
         return df_cuts
 
-    def export_data_content(self):
-        ## TODO: Move this into reporting!
-        # TODO: migrate the function from hot_spot_analysis.py
-        return None
+    def export_data_content(self, data_cut: Union[str, list] = None):
+        data = self.data_analyzed
+
+        ## TODO: Move this into reporting.py!
+        ##TODO: build validator.py function that checks the data argument
+
+        if isinstance(data_cut, str):
+            data_cut = [data_cut]
+
+        valid_unique_data_cuts = list_funcs._make_list_unique(
+            data["data_cuts"]
+        )
+
+        if not any([data_cut == x for x in valid_unique_data_cuts]):
+            tip = "The data_cut should match one of the following:"
+            viable_inputs = [str(x) for x in valid_unique_data_cuts]
+            error_msg = "\n\t".join([tip] + viable_inputs)
+            raise ValueError(error_msg)
+
+        filter_bool = [data_cut == x for x in data["data_cuts"]]
+        key_cols = [
+            "data_cuts",
+            "data_content",
+            "data_cut_content",
+        ]
+
+        return data[key_cols][filter_bool]
+
+        """
+        
+
+        else:
+            data_cut_str = list_funcs._list_to_string(data_cut)
+            data_cuts_str = pd.Series(
+                list_funcs._list_to_string(x) for x in data["data_cuts"]
+            )
+
+            filter_for_data = data_cut_str == data_cuts_str
+            data_filtered = data[filter_for_data]
+            # if data_filtered.empty():
+            #    raise ValueError("Verify data_cut is in data['data_cuts']")
+
+            return data_filtered
+        """
 
     def search_hsa(
         self,
@@ -213,8 +253,8 @@ dfs = [df for i in np.arange(0, data_multiplier)]
 df = pd.concat(dfs)
 df.info()
 
-df_prepared = df
-# df_prepared = df.groupby("sex")
+# df_prepared = df
+df_prepared = df.groupby("sex")
 
 test = HotSpotAnalysis(
     data=df_prepared, data_cuts=["day", "smoker"], depth_limit=2
@@ -241,8 +281,9 @@ def tip_stats(df):
 
 test.run_analysis(user_function=tip_stats)
 # test.export_analyzed_data()
-
 test.export_data_cuts()
+
+test.export_data_content(data_cut=["sex", "day"])
 
 
 # %%
