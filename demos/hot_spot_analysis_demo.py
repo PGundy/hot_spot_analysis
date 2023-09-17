@@ -1,4 +1,4 @@
-#%%
+# %%
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ HSA = HotSpotAnalysis()
 
 
 # ! -------------------------------------------------------------------------
-#%%
+# %%
 
 ## Load data from seaborn
 df = sns.load_dataset("diamonds")
@@ -38,7 +38,7 @@ df["price_per_carat"] = df["price"] / df["carat"]
 df.head()
 
 
-#%%
+# %%
 #! Define a HSA object!
 # HSA = HotSpotAnalysis()
 HSA.data_cuts = df_key_vars
@@ -49,7 +49,6 @@ HSA.data = df
 
 #! Here we have a function that calculates our key metrics via pandas
 def exampleFunction(data):
-
     data = data.agg(
         count=pd.NamedAgg("price", "count"),
         size=pd.NamedAgg("price", "size"),
@@ -64,7 +63,7 @@ def exampleFunction(data):
 #! Is our function going to work for the full HSA?
 HSA.test_user_function(exampleFunction)
 
-#%%
+# %%
 #! Run the HSA
 HSA.run_hsa(user_function=exampleFunction)
 
@@ -72,12 +71,12 @@ HSA.run_hsa(user_function=exampleFunction)
 HSAdata = HSA.get_hsa_data()
 HSAdata.head()
 
-#%%
+# %%
 #! Explore the data - part 1
 print("HSA.get_data_cuts().head()")
 HSA.get_data_cuts().head()
 
-#%%
+# %%
 #! Explore the data - part 2
 TEMP = pd.DataFrame()
 
@@ -92,7 +91,7 @@ else:
 TEMP.head()
 
 
-#%%
+# %%
 #! Search across the data
 HSA.search_hsa_data(
     target_var="data_cut_content",
