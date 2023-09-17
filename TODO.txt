@@ -1,0 +1,7 @@
+# Refactor code to remove the messy "_function" names
+# Migrate non-essential functions/steps into utils
+# Rename 'depth' to 'interactions'
+
+# Prototype Ideas -- This seems a bit dificult due to the lack of reliable features
+# 1. Charting?
+#       a. Scatter plot on bubble chart & scale dot size on N count?
