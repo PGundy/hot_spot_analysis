@@ -18,15 +18,14 @@ def _remove_none_in_list(input_list: list):
 
 def _make_list_unique(input_list: list):
     ## TODO: rename function to remove leading _
+    ### TODO: update function to do the following:
     """
-    Remove duplicates, but preserves the list's order. This is required as set() re-orders the list when resolving dupes.
+    Preserves the list's order, but de-duplicate it. Transform list into dictionary, and keys back to list.
 
     Returns a list.
     """
-    unique_list = []
-    for item in input_list:
-        if item not in unique_list:
-            unique_list.append(item)
+    tmp_dict = dict.fromkeys(input_list)
+    unique_list = list(tmp_dict.keys())
     return unique_list
 
 
