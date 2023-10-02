@@ -1,6 +1,5 @@
 # %%
 import warnings
-from itertools import compress
 from typing import Union
 
 import numpy as np
@@ -32,7 +31,7 @@ class HotSpotAnalysis:
         self.combinations = []
 
     ## TODO: MIGRATE FUNCTIONS TO THE FOLLOWING:
-    #! check_inputs
+    #! validators
     def _check_inputs(self):
         """
         Below we pressure test the user arguments.
@@ -129,23 +128,13 @@ class HotSpotAnalysis:
 
         return did_func_run
 
-    def validate(self, metric_function):
-        #! Should validate just do the following to reduce code complexity?
-        """
-        combos.analyze(
-            dataframe = data_subset,
-            combos = ['test_subset'],
-            analysis_function=user_function
-            )
-        """
-
-        if self.validate_metric_function(metric_function):
-            print("validate: true")
-        else:
-            print("validate: false")
-
     def run_analysis(self, user_function):
         self.setup()
+
+        if not callable(user_function):
+            msg = "Invalid input type: user_function is not a callable function"
+            raise TypeError(msg)
+
         self.data_analyzed = combos.analyze(
             dataframe=self.data,
             combos=self.combinations,
@@ -209,23 +198,6 @@ class HotSpotAnalysis:
 
         return data[key_cols][filter_bool]
 
-        """
-        
-
-        else:
-            data_cut_str = list_funcs._list_to_string(data_cut)
-            data_cuts_str = pd.Series(
-                list_funcs._list_to_string(x) for x in data["data_cuts"]
-            )
-
-            filter_for_data = data_cut_str == data_cuts_str
-            data_filtered = data[filter_for_data]
-            # if data_filtered.empty():
-            #    raise ValueError("Verify data_cut is in data['data_cuts']")
-
-            return data_filtered
-        """
-
     def search_hsa(
         self,
         target_var: Union[str, None] = None,
@@ -236,9 +208,90 @@ class HotSpotAnalysis:
         depth_filter: Union[int, None] = None,
         data: pd.DataFrame = None,
     ):
-        ## TODO: move this into reporting
         # TODO: migrate this function from hot_spot_analysis.py
-        return None
+        # TODO: move this into reporting
+
+        if data is None:
+            df = self.data_analyzed
+        else:
+            if not isinstance(data, pd.DataFrame):
+                raise ValueError("data is not a pd.DataFrame")
+            df = data
+
+        if target_var not in [
+            "data_cuts",
+            "data_content",
+            "data_cut_content",
+        ]:
+            error = ValueError(
+                """
+                Invalid argument passed to target_var.
+                \n
+                target_var must be set to one of the following:
+                - data_cuts: variable name
+                - data_content: variable content
+                - data_cut_content: pattern of 'variable_name:data_value'
+                \n
+                """
+            )
+            raise error
+
+        if search_type not in ["broad", "strict"]:
+            warn_msg = """
+            \n\n
+            search_type defaults to 'broad' when not specified.
+            \n
+            Use either 'broad' or 'strict' to remove this message.
+            \n\n
+            """
+            warnings.warn(warn_msg)
+            search_type = "broad"
+
+        _search_terms_error = ValueError(
+            "'search_terms' must be a string/int or a list of strings/ints."
+        )
+        if search_terms is None:
+            raise _search_terms_error
+
+        if isinstance(search_terms, (str, int)):
+            search_terms = [search_terms]
+
+        if not isinstance(search_terms, list):
+            raise _search_terms_error
+
+        # Require all search_terms to be str or int.
+        search_terms_types = set([type(x) for x in search_terms])
+        if not search_terms_types.issubset([str, int]):
+            raise _search_terms_error
+
+        # !The actual filtering is below
+        search_result = []
+        if search_type == "broad":
+            # Return any (even partial) matches
+            for search_term in search_terms:
+                search_result.append(
+                    df[[search_term in x for x in df[target_var]]]
+                )
+
+        elif search_type == "strict":
+            # Return (all) full matches
+            search_result.append(
+                df[df[target_var].apply(set(search_terms).issuperset)]
+            )
+        else:
+            error = ValueError("This should be impossible...")
+            raise error
+
+        # list into dataframe & optionally filter depth
+        search_result_df = pd.concat(search_result)
+
+        if depth_filter is not None:
+            search_result_df = search_result_df[
+                search_result_df["depth"].isin(depth_filter)
+            ]
+
+        search_result_df.sort_values("depth", ascending=True, inplace=True)
+        return search_result_df
 
 
 # %%
@@ -254,7 +307,7 @@ df = pd.concat(dfs)
 df.info()
 
 # df_prepared = df
-df_prepared = df.groupby("sex")
+df_prepared = df.groupby("sex", as_index=True)
 
 test = HotSpotAnalysis(
     data=df_prepared, data_cuts=["day", "smoker"], depth_limit=2
@@ -263,7 +316,8 @@ test = HotSpotAnalysis(
 test.setup()
 
 
-def tip_stats(df):
+# %%
+def tip_stats(df: pd.DataFrame = None):
     result = df.agg(
         count=pd.NamedAgg("tip", "count"),
         mean=pd.NamedAgg("tip", np.mean),
@@ -271,19 +325,20 @@ def tip_stats(df):
     )
 
     result = result.round(1)
-    result["expected_total"] = result["count"] * result["mean"]
-    result["total_is_larger"] = result["total"] >= result["expected_total"]
+    # result["expected_total"] = result["count"] * result["mean"]
+    # result["total_is_larger"] = result["total"] >= result["expected_total"]
 
     return result
 
 
-# tip_stats(df)
+# test.validate_metric_function(tip_stats)
 
-test.run_analysis(user_function=tip_stats)
-# test.export_analyzed_data()
-test.export_data_cuts()
+test.run_analysis(tip_stats)
+# test.export_data_cuts()
+test.export_analyzed_data()
 
-test.export_data_content(data_cut=["sex", "day"])
+# test.export_data_content(data_cut=["day"])
+# test.export_data_content(data_cut=["sex", "day"])
 
 
 # %%
