@@ -7,9 +7,8 @@ import pandas as pd
 
 from utils import combos, list_funcs, reporting, validators
 
+
 # %%
-
-
 class HotSpotAnalysis:
     data: pd.DataFrame
     data_cuts: list
@@ -100,7 +99,9 @@ class HotSpotAnalysis:
         self.create_combos()
 
     #! validate
-    def validate_metric_function(self, user_metric_function):
+    def validate_metric_function(
+        self, user_metric_function, return_output=False, sample_n=50
+    ):
         """
         Run the user_metric_function on the data provided. If not
         grouped it creates a constant 'All Rows' to maintain
@@ -114,14 +115,17 @@ class HotSpotAnalysis:
             a pd.DataFrame()
         """
         data = self.data_obj
-        data = data.iloc[0:1].copy()
+        data = data.sample(sample_n)
 
-        data["All Rows"] = "All Rows"
-        grouping_vars = ["All Rows"]
+        GROUP_VAR = "Validate Metric Function"
+        data[GROUP_VAR] = f"Sample of {sample_n} Rows"
+        grouping_vars = [GROUP_VAR]
         data = data.groupby(grouping_vars)
 
         try:
-            user_metric_function(data)
+            output = user_metric_function(data)
+            if return_output:
+                return output
             did_func_run = True
         except:
             did_func_run = False
@@ -306,8 +310,8 @@ dfs = [df for i in np.arange(0, data_multiplier)]
 df = pd.concat(dfs)
 df.info()
 
-# df_prepared = df
-df_prepared = df.groupby("sex", as_index=True)
+df_prepared = df
+# df_prepared = df.groupby("sex", as_index=True)
 
 test = HotSpotAnalysis(
     data=df_prepared, data_cuts=["day", "smoker"], depth_limit=2
@@ -340,10 +344,15 @@ test.export_analyzed_data()
 # test.export_data_content(data_cut=["day"])
 # test.export_data_content(data_cut=["sex", "day"])
 
-
+""
 # %%
 
-#! prepare
-#! analyze <-- this would run prepare if not already ran
-#! search
-#! export <-- options that replace all get_X() functions
+
+# TODO:
+# 1. fix search functionality to be more atuned with
+# 1. clean up files in HSA
+# 2. cleanup the logic in the search function (move validation to validators.py)
+# 3. move
+
+
+# %%
