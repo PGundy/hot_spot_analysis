@@ -3,9 +3,12 @@ import warnings
 from typing import Union
 
 import numpy as np
-import pandas as pd
 
 from utils import combos, list_funcs, reporting, validators
+
+with warnings.catch_warnings():
+    warnings.simplefilter(action="ignore", category=FutureWarning)
+import pandas as pd
 
 
 # %%
@@ -53,9 +56,7 @@ class HotSpotAnalysis:
 
         ### Check 04 - data_cuts are subset of data.columns
         if not all(
-            list_funcs.list1_in_list2(
-                list1=self.data_cuts, list2=self.data_obj.columns
-            )
+            list_funcs.list1_in_list2(list1=self.data_cuts, list2=self.data_obj.columns)
         ):
             invalid_elements = list_funcs.list1_in_list2(
                 list1=self.data_cuts,
@@ -89,9 +90,7 @@ class HotSpotAnalysis:
 
     #! prepare (backend)
     def create_combos(self):
-        self.combinations = combos._create_combos(
-            self.data_cuts, self.depth_limit
-        )
+        self.combinations = combos._create_combos(self.data_cuts, self.depth_limit)
 
     #! setup
     def setup(self):
@@ -183,9 +182,7 @@ class HotSpotAnalysis:
         if isinstance(data_cut, str):
             data_cut = [data_cut]
 
-        valid_unique_data_cuts = list_funcs._make_list_unique(
-            data["data_cuts"]
-        )
+        valid_unique_data_cuts = list_funcs._make_list_unique(data["data_cuts"])
 
         if not any([data_cut == x for x in valid_unique_data_cuts]):
             tip = "The data_cut should match one of the following:"
@@ -273,15 +270,11 @@ class HotSpotAnalysis:
         if search_type == "broad":
             # Return any (even partial) matches
             for search_term in search_terms:
-                search_result.append(
-                    df[[search_term in x for x in df[target_var]]]
-                )
+                search_result.append(df[[search_term in x for x in df[target_var]]])
 
         elif search_type == "strict":
             # Return (all) full matches
-            search_result.append(
-                df[df[target_var].apply(set(search_terms).issuperset)]
-            )
+            search_result.append(df[df[target_var].apply(set(search_terms).issuperset)])
         else:
             error = ValueError("This should be impossible...")
             raise error
@@ -305,27 +298,28 @@ import pandas as pd
 import seaborn as sb
 
 df = sb.load_dataset("tips")
-data_multiplier = 10
+data_multiplier = 100
 dfs = [df for i in np.arange(0, data_multiplier)]
 df = pd.concat(dfs)
 df.info()
 
+# %%
+
+df.info()
 df_prepared = df
 # df_prepared = df.groupby("sex", as_index=True)
 
-test = HotSpotAnalysis(
-    data=df_prepared, data_cuts=["day", "smoker"], depth_limit=2
-)
 
-test.setup()
+# %%
+demo = HotSpotAnalysis(data=df_prepared, data_cuts=["day", "smoker"], depth_limit=2)
 
 
 # %%
 def tip_stats(df: pd.DataFrame = None):
     result = df.agg(
         count=pd.NamedAgg("tip", "count"),
-        mean=pd.NamedAgg("tip", np.mean),
-        total=pd.NamedAgg("tip", np.sum),
+        mean=pd.NamedAgg("tip", "mean"),
+        total=pd.NamedAgg("tip", "sum"),
     )
 
     result = result.round(1)
@@ -335,21 +329,23 @@ def tip_stats(df: pd.DataFrame = None):
     return result
 
 
-# test.validate_metric_function(tip_stats)
+tip_stats(df_prepared)
+# demo.validate_metric_function(tip_stats)
 
-test.run_analysis(tip_stats)
-# test.export_data_cuts()
-test.export_analyzed_data()
-
-# test.export_data_content(data_cut=["day"])
-# test.export_data_content(data_cut=["sex", "day"])
-
-""
 # %%
+
+demo.run_analysis(tip_stats)
+# demo.export_data_cuts()
+output = demo.export_analyzed_data()
+output
+# %%
+
+output_f = output[output["count"] >= 2500]
+output_f.sort_values(["mean", "total"], ascending=False)
 
 
 # TODO:
-# 1. fix search functionality to be more atuned with
+# 1. fix search functionality to work with lists being unhashable
 # 1. clean up files in HSA
 # 2. cleanup the logic in the search function (move validation to validators.py)
 # 3. move
