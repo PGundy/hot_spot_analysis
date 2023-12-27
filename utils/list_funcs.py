@@ -51,9 +51,7 @@ def _string_to_list(string: str):
     return string.split(delimiter)
 
 
-def list1_in_list2(
-    list1: list, list2: list, return_non_matches: bool = None
-):
+def list1_in_list2(list1: list, list2: list, return_non_matches: bool = None):
     """
     Check if list1 is contained in list2
     """

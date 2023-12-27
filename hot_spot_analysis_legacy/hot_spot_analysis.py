@@ -138,9 +138,7 @@ class HotSpotAnalysis:
         combination_final = []
 
         for i in np.arange(0, self.depth_limit, 1) + 1:
-            combinations = list(
-                itertools.combinations(self.data_cuts, int(i))
-            )
+            combinations = list(itertools.combinations(self.data_cuts, int(i)))
             combinations = list(map(list, combinations))
             combinations.sort()
 
@@ -155,9 +153,7 @@ class HotSpotAnalysis:
                 self._combinations = list(filter(None, combination_final))
 
             if self._is_data_grouped():
-                self._combinations = [
-                    self._get_data_group_by()
-                ] + self._combinations
+                self._combinations = [self._get_data_group_by()] + self._combinations
 
     def get_combos(self):
         """
@@ -240,7 +236,6 @@ class HotSpotAnalysis:
 
         resultList = []
         for step_i, grp_var_i in enumerate(self._combinations):
-
             dataObj = self._add_to_groupby(grp_var_i)
             grp_var_i_full = dataObj.keys
 
@@ -276,7 +271,6 @@ class HotSpotAnalysis:
             # Create the list zip("data_cuts","data_content")
             tmp_var_group_clean = []
             for row in np.arange(0, len(result), 1):
-
                 # create empty pd.Series -- Then loop builds it
                 if row == 0:
                     result["data_cut_content"] = pd.Series(dtype=object)
@@ -369,9 +363,7 @@ class HotSpotAnalysis:
             a pd.DataFrame()
         """
         key_variables = ["depth", "data_cuts"]
-        filter_by = self._outputHSA["depth"].isin(
-            [self._get_useful_depth()]
-        )
+        filter_by = self._outputHSA["depth"].isin([self._get_useful_depth()])
 
         df_cuts = self._outputHSA[filter_by][key_variables]
         df_cuts["data_cuts"] = df_cuts["data_cuts"].apply(
@@ -501,15 +493,11 @@ class HotSpotAnalysis:
         if search_type == "broad":
             # Return any (even partial) matches
             for search_term in search_terms:
-                search_result.append(
-                    df[[search_term in x for x in df[target_var]]]
-                )
+                search_result.append(df[[search_term in x for x in df[target_var]]])
 
         elif search_type == "strict":
             # Return (all) full matches
-            search_result.append(
-                df[df[target_var].apply(set(search_terms).issuperset)]
-            )
+            search_result.append(df[df[target_var].apply(set(search_terms).issuperset)])
         else:
             error = ValueError("This should be impossible...")
             raise error

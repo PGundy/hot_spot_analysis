@@ -7,7 +7,7 @@ import pandas as pd
 import seaborn as sns
 
 # if you cloned the repo locally use the following line
-from hot_spot_analysis.hot_spot_analysis import HotSpotAnalysis
+from hot_spot_analysis_legacy.hot_spot_analysis import HotSpotAnalysis
 
 # # Otherwise you will have to have run `pip install hot_spot_analysis`
 # from hot_spot_analysis import HotSpotAnalysis
