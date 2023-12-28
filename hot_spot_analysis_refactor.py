@@ -193,7 +193,9 @@ class HotSpotAnalysis:
             combo_df_final = combo_df[column_order]
             hsa_dfs.append(combo_df_final)
 
-        hsa_df = pd.concat(hsa_dfs).reset_index(drop=True)
+        hsa_df = pd.concat(hsa_dfs)
+        # hsa_df = hsa_df.reset_index(names=["combo_index"])
+        hsa_df = hsa_df.reset_index(drop=True)
         self.hsa_output_df = hsa_df
 
     def run_hsa(self):
@@ -210,20 +212,48 @@ class HotSpotAnalysis:
 
     def search_hsa_output(
         self,
-        search_term: str = None,
-        search_type: str = "keys",
-        # interactions: list[int] = list(np.arange(self.interaction_limit) + 1),
+        hsa_df: pd.DataFrame = pd.DataFrame(None),
+        search_terms: str | list[str] = None,
+        search: str = "keys",
+        interactions: int | list[int] = [0],  # default defined below
+        search_type: str = "any",
     ):
+        # TODO: add check to see if 'self.hsa_output_df' is defined.
+        if hsa_df.empty:
+            hsa_df = self.hsa_output_df
+
+        if isinstance(search_terms, str):
+            search_terms = [search_terms]
+        search_terms = sorted(search_terms)
+
+        if isinstance(interactions, int):
+            interactions = [interactions]
+        if interactions == [0]:
+            interactions = list(np.arange(self.interaction_limit) + 1)
+
         valid_types = ["keys", "values"]
-        if search_type not in valid_types:
-            raise ValueError(f"'type' must be equal to {valid_types}")
+        if search not in valid_types:
+            raise ValueError(f"'type' must be equal to either {valid_types}")
+        search_col = "combo_" + search
 
-        if search_type == "keys":
-            search_col = "combo_keys"
+        hsa_df_subset = hsa_df[hsa_df["interaction_count"].isin(interactions)]
+
+        search_types = ["any", "all"]
+        if search_type not in search_types:
+            raise ValueError(f"'search_type' must be either: {search_types}")
+
+        if search_type == "all":
+            search_results_bool = [
+                search_terms == sorted(x) for x in hsa_df_subset[search_col]
+            ]
         else:
-            search_col = "combo_values"
+            search_results_interim = [
+                lists.find_items(search_terms, x, return_bools=True)
+                for x in hsa_df_subset[search_col]
+            ]
+            search_results_bool = [any(x) for x in search_results_interim]
 
-        search_results = hsa_data[[search_term in x for x in hsa_data[search_col]]]
+        search_results = hsa_df_subset[search_results_bool]
 
         if len(search_results) > 0:
             return search_results
@@ -234,15 +264,15 @@ class HotSpotAnalysis:
 # %%
 
 df_tips = sns.load_dataset("tips")
-letters = ["a", "b", "c", "d", "e", "f", "g"]
+numbers = np.arange(20)
 df_tips_plus = []
-for i, letter in enumerate(letters):
-    print(letter)
+for i, _ in enumerate(numbers):
+    # print(i)
     df_tips_temp = df_tips.copy()
-    df_tips_temp["letter"] = pd.Series([letter] * len(df_tips_temp))
+    df_tips_temp["letter"] = pd.Series([i] * len(df_tips_temp))
     df_tips_plus.append(df_tips_temp)
 
-df_tips_plus = pd.concat(df_tips_plus)
+df_tips_plus: pd.DataFrame = pd.concat(df_tips_plus)
 
 # %%
 
@@ -282,6 +312,17 @@ hsa_data.head(10)
 
 
 # %%
-HSA.search_hsa_output(search_term="Yes", search_type="values")
+HSA.search_hsa_output(search_terms="smoker", search="keys", search_type="any")
+
+# %%
+HSA.search_hsa_output(search_terms="smoker", search="keys", search_type="all")
+
+# %%
+HSA.search_hsa_output(search_terms=["smoker", "day"], search="keys", search_type="all")
+
+# HSA.search_hsa_output(search_terms="smoker", search="keys", interactions=1)
+
+# %%
+HSA.search_hsa_output(search_terms=["Fri", "Yes"], search="values", search_type="any")
 
 # %%
