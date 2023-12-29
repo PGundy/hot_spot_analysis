@@ -26,13 +26,13 @@ letters = [
     "o",  # 15
 ]
 
-possible_interactions = np.arange(6) + 1
+possible_interactions = np.arange(10) + 1
 
 output_dicts = []
 for interaction_max in possible_interactions:
     for i, _ in enumerate(letters):
-        if i == 0:
-            pass
+        # if i == 0:
+        #    pass
 
         target_cols = letters[0:i]
         combinations = combos.create_combos(
@@ -72,4 +72,15 @@ px.line(
     color="interaction_max",
     # size="count_combinations",
 )
+# %%
+
+px.line(
+    data_frame=df_viz[df.count_target_cols >= df.interaction_max],
+    x="interaction_max",
+    y="count_combinations",
+    # log_x=True,
+    color="count_target_cols",
+    # size="count_combinations",
+)
+
 # %%
