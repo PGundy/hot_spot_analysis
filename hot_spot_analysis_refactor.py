@@ -237,25 +237,26 @@ class HotSpotAnalysis:
         if interactions == [0]:
             interactions = list(np.arange(self.interaction_limit) + 1)
 
-        valid_types = ["keys", "values"]
-        if search not in valid_types:
-            raise ValueError(f"'type' must be equal to either {valid_types}")
-        search_col = "combo_" + search
-
-        hsa_df_subset = hsa_df[hsa_df["interaction_count"].isin(interactions)]
-
         search_types = ["any", "all"]
         if search_type not in search_types:
             raise ValueError(f"'search_type' must be either: {search_types}")
 
+        hsa_df_subset = hsa_df[hsa_df["interaction_count"].isin(interactions)]
+
+        valid_types = ["keys", "values"]
+        if search not in valid_types:
+            raise ValueError(f"'type' must be equal to either {valid_types}")
+        elif search == "keys":
+            search_vector = [list(x.keys()) for x in hsa_df_subset["combo_dict"]]
+        elif search == "values":
+            search_vector = [list(x.values) for x in hsa_df_subset["combo_dict"]]
+
         if search_type == "all":
-            search_results_bool = [
-                search_terms == sorted(x) for x in hsa_df_subset[search_col]
-            ]
+            search_results_bool = [search_terms == sorted(x) for x in search_vector]
         else:
             search_results_interim = [
                 lists.find_items(search_terms, x, return_bools=True)
-                for x in hsa_df_subset[search_col]
+                for x in search_vector
             ]
             search_results_bool = [any(x) for x in search_results_interim]
 
@@ -304,10 +305,10 @@ def tip_stats(data: pd.DataFrame) -> pd.DataFrame:
 
 HSA = HotSpotAnalysis(
     # data=df_tips_plus.groupby(["sex", "size"], observed=True),
-    data=df_tips_plus.groupby("sex", observed=True),
-    # data=df_tips_plus,
+    # data=df_tips_plus.groupby("sex", observed=True),
+    data=df_tips_plus,
     target_cols=["day", "smoker", "letter"],
-    interaction_limit=2,
+    interaction_limit=3,
     objective_function=tip_stats,
 )
 
@@ -319,11 +320,11 @@ hsa_data.head(10)
 
 
 # %%
-# HSA.search_hsa_output(search_terms="smoker", search="keys", search_type="any")
+HSA.search_hsa_output(search_terms="smoker", search="keys", search_type="any")
 # HSA.search_hsa_output(search_terms="smoker", search="keys", search_type="all")
 # HSA.search_hsa_output(search_terms=["smoker", "day"], search="keys", search_type="all")
 # HSA.search_hsa_output(search_terms="smoker", search="keys", interactions=1)
-# HSA.search_hsa_output(search_terms=["Fri", "Yes"], search="values", search_type="any")
+HSA.search_hsa_output(search_terms=["Fri", "Yes"], search="values", search_type="all")
 
 
 # %%
