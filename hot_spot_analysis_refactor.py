@@ -205,8 +205,29 @@ class HotSpotAnalysis:
         hsa_df = hsa_df.reset_index(drop=True)
         self.hsa_output_df = hsa_df
 
+    def pop_pre_grouped_vars(self):
+        grp_vars = self.pre_grouped_vars
+
+        pre_grouped_dicts: list[dict] = []
+        for _, combo_dict_i in enumerate(self.hsa_output_df["combo_dict"]):
+            pre_grouped_dict = {}
+            if grp_vars is not None:
+                for grp_var in grp_vars:
+                    pre_grouped_dict[grp_var] = combo_dict_i.pop(grp_var)
+
+            pre_grouped_dicts.append(pre_grouped_dict)
+
+        self.hsa_output_df["pre_grouped_dict"] = pre_grouped_dicts
+
+        # Now reorder the columns so our grouped
+        all_columns_with_dupes = ["pre_grouped_dict"] + list(self.hsa_output_df.columns)
+        all_columns_ordered = lists.unique(all_columns_with_dupes)
+        self.hsa_output_df = self.hsa_output_df[all_columns_ordered]
+
     def run_hsa(self):
         self.process_hsa_raw_output_dicts()
+        if self.pre_grouped_vars is not None:
+            self.pop_pre_grouped_vars()
         print("HSA has been run & the output has been processed.")
 
     def export_hsa_output_df(self):
@@ -328,30 +349,6 @@ HSA.search_hsa_output(search_terms="smoker", search="keys", search_type="any")
 
 
 # %%
-
-
-def pop_pre_grouped_vars():
-    test_df = HSA.hsa_output_df.copy()
-    grp_vars = HSA.pre_grouped_vars
-
-    pre_grouped_dicts: list[dict] = []
-    for _, combo_dict_i in enumerate(test_df["combo_dict"]):
-        pre_grouped_dict = {}
-        if grp_vars is not None:
-            for grp_var in grp_vars:
-                pre_grouped_dict[grp_var] = combo_dict_i.pop(grp_var)
-
-        pre_grouped_dicts.append(pre_grouped_dict)
-
-    test_df["pre_grouped_dict"] = pre_grouped_dicts
-
-    # Now reorder the columns so our grouped
-    all_columns_with_dupes = ["pre_grouped_dict"] + list(test_df.columns)
-    all_columns_ordered = lists.unique(all_columns_with_dupes)
-
-    test_df_output = test_df[all_columns_ordered]
-
-    return test_df_output
 
 
 test = pop_pre_grouped_vars()
