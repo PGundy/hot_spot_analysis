@@ -305,8 +305,8 @@ def tip_stats(data: pd.DataFrame) -> pd.DataFrame:
 
 HSA = HotSpotAnalysis(
     # data=df_tips_plus.groupby(["sex", "size"], observed=True),
-    # data=df_tips_plus.groupby("sex", observed=True),
-    data=df_tips_plus,
+    data=df_tips_plus.groupby("sex", observed=True),
+    # data=df_tips_plus,
     target_cols=["day", "smoker", "letter"],
     interaction_limit=3,
     objective_function=tip_stats,
@@ -324,18 +324,13 @@ HSA.search_hsa_output(search_terms="smoker", search="keys", search_type="any")
 # HSA.search_hsa_output(search_terms="smoker", search="keys", search_type="all")
 # HSA.search_hsa_output(search_terms=["smoker", "day"], search="keys", search_type="all")
 # HSA.search_hsa_output(search_terms="smoker", search="keys", interactions=1)
-HSA.search_hsa_output(search_terms=["Fri", "Yes"], search="values", search_type="all")
+# HSA.search_hsa_output(search_terms=["Fri", "Yes"], search="values", search_type="all")
 
 
 # %%
 
-#! Test of 'pop'ing the grouped input DF from the combo into 'group_dict'
 
-
-def extract_pre_grouped_vars():
-    #! This step should be done AFTER building 'combo_dict'
-    #! we should THEN DROP combo_keys & combo_values
-    #! so we have a combo_dict & pre_groupby_dict
+def pop_pre_grouped_vars():
     test_df = HSA.hsa_output_df.copy()
     grp_vars = HSA.pre_grouped_vars
 
@@ -349,10 +344,17 @@ def extract_pre_grouped_vars():
         pre_grouped_dicts.append(pre_grouped_dict)
 
     test_df["pre_grouped_dict"] = pre_grouped_dicts
-    return test_df
+
+    # Now reorder the columns so our grouped
+    all_columns_with_dupes = ["pre_grouped_dict"] + list(test_df.columns)
+    all_columns_ordered = lists.unique(all_columns_with_dupes)
+
+    test_df_output = test_df[all_columns_ordered]
+
+    return test_df_output
 
 
-test = extract_pre_grouped_vars()
-test.info()
+test = pop_pre_grouped_vars()
+test
 
 # %%
