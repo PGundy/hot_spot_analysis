@@ -25,7 +25,7 @@ class HotSpotAnalysis:
     def __init__(
         self,  # Default values
         data: pd.DataFrame = pd.DataFrame(None),  # HSA.data.empty -> True
-        target_cols: list[str] = None,  # []
+        target_cols: list = [None],  # []
         interaction_limit: int = 3,  # 3
         objective_function=None,
     ):
@@ -147,11 +147,11 @@ class HotSpotAnalysis:
 
         hsa_dfs = []
         for row_i, _ in enumerate(self.hsa_raw_output_dicts):
-            combo_dict = self.hsa_raw_output_dicts[row_i]
+            combo_i_dict = self.hsa_raw_output_dicts[row_i]
 
-            combo_combination = combo_dict["combination"]
-            combo_interaction_count = combo_dict["interaction_count"]
-            combo_df = combo_dict["df"]
+            combo_combination = combo_i_dict["combination"]
+            combo_interaction_count = combo_i_dict["interaction_count"]
+            combo_df = combo_i_dict["df"]
             combo_df_rows = len(combo_df)
 
             # This method with a for loop should preserve column order b/c sets do NOT preserve ordering!
@@ -163,7 +163,7 @@ class HotSpotAnalysis:
                     combo_df_obj_func_calcs.append(col)
             combo_df_obj_func_calcs
 
-            # return combo_dict
+            # return combo_i_dict
 
             combo_df["interaction_count"] = combo_interaction_count
             combo_df["combo_keys"] = pd.Series([combo_combination] * combo_df_rows)
@@ -173,18 +173,25 @@ class HotSpotAnalysis:
 
             combination_dicts = []
             for row in range(combo_df_rows):
-                combo_dict = dict(
+                combination_dict = dict(
                     zip(
                         combo_df["combo_keys"][row],
                         combo_df["combo_values"][row],
                     )
                 )
-                combination_dicts.append(combo_dict)
+                combination_dicts.append(combination_dict)
 
             combo_df["combo_dict"] = combination_dicts
+            combo_df.drop(
+                columns=["combo_keys", "combo_values"],
+                inplace=True,
+            )
 
             hsa_columns = list(
-                set(combo_df) - set(combo_df_obj_func_calcs) - set(combo_combination)
+                # Dynamically grab the HSA columns using sets
+                set(combo_df.columns)
+                - set(combo_df_obj_func_calcs)
+                - set(combo_combination)
             )
             hsa_columns.sort()
 
@@ -207,7 +214,6 @@ class HotSpotAnalysis:
             raise ValueError(
                 "hsa_output_df is not defined. Try: running run_hsa() then use this command."
             )
-
         return self.hsa_output_df
 
     def search_hsa_output(
@@ -264,7 +270,7 @@ class HotSpotAnalysis:
 # %%
 
 df_tips = sns.load_dataset("tips")
-numbers = np.arange(20)
+numbers = np.arange(10)
 df_tips_plus = []
 for i, _ in enumerate(numbers):
     # print(i)
@@ -297,8 +303,9 @@ def tip_stats(data: pd.DataFrame) -> pd.DataFrame:
 
 
 HSA = HotSpotAnalysis(
-    # data=df_tips_plus.groupby("sex", observed=True),
-    data=df_tips_plus,
+    # data=df_tips_plus.groupby(["sex", "size"], observed=True),
+    data=df_tips_plus.groupby("sex", observed=True),
+    # data=df_tips_plus,
     target_cols=["day", "smoker", "letter"],
     interaction_limit=2,
     objective_function=tip_stats,
@@ -312,17 +319,39 @@ hsa_data.head(10)
 
 
 # %%
-HSA.search_hsa_output(search_terms="smoker", search="keys", search_type="any")
-
-# %%
-HSA.search_hsa_output(search_terms="smoker", search="keys", search_type="all")
-
-# %%
-HSA.search_hsa_output(search_terms=["smoker", "day"], search="keys", search_type="all")
-
+# HSA.search_hsa_output(search_terms="smoker", search="keys", search_type="any")
+# HSA.search_hsa_output(search_terms="smoker", search="keys", search_type="all")
+# HSA.search_hsa_output(search_terms=["smoker", "day"], search="keys", search_type="all")
 # HSA.search_hsa_output(search_terms="smoker", search="keys", interactions=1)
+# HSA.search_hsa_output(search_terms=["Fri", "Yes"], search="values", search_type="any")
+
 
 # %%
-HSA.search_hsa_output(search_terms=["Fri", "Yes"], search="values", search_type="any")
+
+#! Test of 'pop'ing the grouped input DF from the combo into 'group_dict'
+
+
+def extract_pre_grouped_vars():
+    #! This step should be done AFTER building 'combo_dict'
+    #! we should THEN DROP combo_keys & combo_values
+    #! so we have a combo_dict & pre_groupby_dict
+    test_df = HSA.hsa_output_df.copy()
+    grp_vars = HSA.pre_grouped_vars
+
+    pre_grouped_dicts: list[dict] = []
+    for _, combo_dict_i in enumerate(test_df["combo_dict"]):
+        pre_grouped_dict = {}
+        if grp_vars is not None:
+            for grp_var in grp_vars:
+                pre_grouped_dict[grp_var] = combo_dict_i.pop(grp_var)
+
+        pre_grouped_dicts.append(pre_grouped_dict)
+
+    test_df["pre_grouped_dict"] = pre_grouped_dicts
+    return test_df
+
+
+test = extract_pre_grouped_vars()
+test.info()
 
 # %%
