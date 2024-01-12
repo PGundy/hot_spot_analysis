@@ -208,19 +208,19 @@ class HotSpotAnalysis:
     def pop_pre_grouped_vars(self):
         grp_vars = self.pre_grouped_vars
 
-        pre_grouped_dicts: list[dict] = []
+        group_combo_dicts: list[dict] = []
         for _, combo_dict_i in enumerate(self.hsa_output_df["combo_dict"]):
-            pre_grouped_dict = {}
+            group_combo_dict = {}
             if grp_vars is not None:
                 for grp_var in grp_vars:
-                    pre_grouped_dict[grp_var] = combo_dict_i.pop(grp_var)
+                    group_combo_dict[grp_var] = combo_dict_i.pop(grp_var)
 
-            pre_grouped_dicts.append(pre_grouped_dict)
+            group_combo_dicts.append(group_combo_dict)
 
-        self.hsa_output_df["pre_grouped_dict"] = pre_grouped_dicts
+        self.hsa_output_df["group_combo_dict"] = group_combo_dicts
 
         # Now reorder the columns so our grouped
-        all_columns_with_dupes = ["pre_grouped_dict"] + list(self.hsa_output_df.columns)
+        all_columns_with_dupes = ["group_combo_dict"] + list(self.hsa_output_df.columns)
         all_columns_ordered = lists.unique(all_columns_with_dupes)
         self.hsa_output_df = self.hsa_output_df[all_columns_ordered]
 
@@ -240,14 +240,22 @@ class HotSpotAnalysis:
     def search_hsa_output(
         self,
         hsa_df: pd.DataFrame = pd.DataFrame(None),
+        search_across: str = "keys",
         search_terms: str | list[str] = None,
-        search: str = "keys",
         interactions: int | list[int] = [0],  # default defined below
         search_type: str = "any",
     ):
         # TODO: add check to see if 'self.hsa_output_df' is defined.
         if hsa_df.empty:
             hsa_df = self.hsa_output_df
+
+        if "group_combo_dict" in hsa_df.columns:
+            hsa_dict = []
+            for i in range(len(hsa_df)):
+                hsa_dict.append(hsa_df.group_combo_dict[i] | hsa_df.combo_dict[i])
+            hsa_df["hsa_dict"] = hsa_dict
+        else:
+            hsa_df["hsa_dict"] = hsa_df["combo_dict"]
 
         if isinstance(search_terms, str):
             search_terms = [search_terms]
@@ -264,13 +272,14 @@ class HotSpotAnalysis:
 
         hsa_df_subset = hsa_df[hsa_df["interaction_count"].isin(interactions)]
 
-        valid_types = ["keys", "values"]
-        if search not in valid_types:
-            raise ValueError(f"'type' must be equal to either {valid_types}")
-        elif search == "keys":
-            search_vector = [list(x.keys()) for x in hsa_df_subset["combo_dict"]]
-        elif search == "values":
-            search_vector = [list(x.values) for x in hsa_df_subset["combo_dict"]]
+        search_across_types = ["keys", "values"]
+        if search_across not in search_across_types:
+            search_vector = None
+            raise ValueError(f"'type' must be equal to either {search_across_types}")
+        elif search_across == "keys":
+            search_vector = [list(x.keys()) for x in hsa_df_subset["hsa_dict"]]
+        elif search_across == "values":
+            search_vector = [list(x.values()) for x in hsa_df_subset["combo_dict"]]
 
         if search_type == "all":
             search_results_bool = [search_terms == sorted(x) for x in search_vector]
@@ -326,8 +335,8 @@ def tip_stats(data: pd.DataFrame) -> pd.DataFrame:
 
 HSA = HotSpotAnalysis(
     # data=df_tips_plus.groupby(["sex", "size"], observed=True),
-    data=df_tips_plus.groupby("sex", observed=True),
-    # data=df_tips_plus,
+    # data=df_tips_plus.groupby("sex", observed=True),
+    data=df_tips_plus,
     target_cols=["day", "smoker", "letter"],
     interaction_limit=3,
     objective_function=tip_stats,
@@ -341,11 +350,15 @@ hsa_data.head(10)
 
 
 # %%
-HSA.search_hsa_output(search_terms="smoker", search="keys", search_type="any")
-# HSA.search_hsa_output(search_terms="smoker", search="keys", search_type="all")
-# HSA.search_hsa_output(search_terms=["smoker", "day"], search="keys", search_type="all")
-# HSA.search_hsa_output(search_terms="smoker", search="keys", interactions=1)
-# HSA.search_hsa_output(search_terms=["Fri", "Yes"], search="values", search_type="all")
+HSA.search_hsa_output(search_terms="Yes", search_across="values", search_type="any")
+HSA.search_hsa_output(search_terms="smoker", search_across="keys", search_type="all")
+HSA.search_hsa_output(
+    search_terms=["smoker", "day"], search_across="keys", search_type="all"
+)
+HSA.search_hsa_output(search_terms="smoker", search_across="keys", interactions=1)
+HSA.search_hsa_output(
+    search_terms=["Male", "Yes"], search_across="values", search_type="all"
+)
 
 
 # %%
