@@ -128,6 +128,7 @@ class HotSpotAnalysis:
             print(f"\tstep: {step_i} group by {combo}")
             df_grp_by_combo = self.data_prep.groupby(combo, observed=True)
             df_combo_output = self.objective_function(df_grp_by_combo)
+
             combination_output = {
                 "combination": combo,
                 "interaction_count": len(combo),
@@ -242,14 +243,16 @@ class HotSpotAnalysis:
         hsa_df: pd.DataFrame = pd.DataFrame(None),
         search_across: str = "keys",
         search_terms: str | list[str] = None,
-        interactions: int | list[int] = [0],  # default defined below
         search_type: str = "any",
+        interactions: int | list[int] = [0],  # default defined below
     ):
         # TODO: add check to see if 'self.hsa_output_df' is defined.
         if hsa_df.empty:
             hsa_df = self.hsa_output_df
 
-        if "group_combo_dict" in hsa_df.columns:
+        is_grouped_hsa = "group_combo_dict" in hsa_df.columns
+
+        if is_grouped_hsa:
             hsa_dict = []
             for i in range(len(hsa_df)):
                 hsa_dict.append(hsa_df.group_combo_dict[i] | hsa_df.combo_dict[i])
@@ -273,13 +276,13 @@ class HotSpotAnalysis:
         hsa_df_subset = hsa_df[hsa_df["interaction_count"].isin(interactions)]
 
         search_across_types = ["keys", "values"]
+        search_vector = []
         if search_across not in search_across_types:
-            search_vector = None
             raise ValueError(f"'type' must be equal to either {search_across_types}")
         elif search_across == "keys":
             search_vector = [list(x.keys()) for x in hsa_df_subset["hsa_dict"]]
         elif search_across == "values":
-            search_vector = [list(x.values()) for x in hsa_df_subset["combo_dict"]]
+            search_vector = [list(x.values()) for x in hsa_df_subset["hsa_dict"]]
 
         if search_type == "all":
             search_results_bool = [search_terms == sorted(x) for x in search_vector]
@@ -295,7 +298,28 @@ class HotSpotAnalysis:
         if len(search_results) > 0:
             return search_results
         else:
-            print("0 results. Please try again.")
+            if is_grouped_hsa:
+                extra_msg_search_across = " & group_combo_dict"
+            else:
+                extra_msg_search_across = ""
+
+            print("0 search results with the following parameters:")
+            msg_search_terms = ",".join(["'" + x + "'" for x in search_terms])
+            msg_interactions = ",".join(map(str, interactions))
+            search_failed_helper = (
+                "\t"
+                + f"search_across: '{search_across}' within 'combo_dict"
+                + extra_msg_search_across
+                + "'"
+                + "\n\t"
+                + f"search_terms: {msg_search_terms}"
+                + "\n\t"
+                + f"search_type: '{search_type}' of the search_terms"
+                + "\n\t"
+                + f"interactions: {msg_interactions}"
+                + "\n\n"
+            )
+            print(search_failed_helper)
 
 
 # %%
@@ -358,6 +382,9 @@ HSA.search_hsa_output(
 HSA.search_hsa_output(search_terms="smoker", search_across="keys", interactions=1)
 HSA.search_hsa_output(
     search_terms=["Male", "Yes"], search_across="values", search_type="all"
+)
+HSA.search_hsa_output(
+    search_terms=["Fri", "Yes"], search_across="values", search_type="all"
 )
 
 
