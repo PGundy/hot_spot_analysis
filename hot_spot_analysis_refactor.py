@@ -262,7 +262,7 @@ class HotSpotAnalysis:
             (hsa_df["interaction_count"].isin(interactions))
             & (hsa_df["n_rows"] >= n_row_minimum)
         ].copy()
-        df.reset_index(inplace=True)
+        df.reset_index(inplace=True, drop=True)
 
         is_grouped_hsa = "group_combo_dict" in df.columns
         if is_grouped_hsa:
@@ -341,7 +341,7 @@ df_tips_plus = []
 for i, _ in enumerate(numbers):
     # print(i)
     df_tips_temp = df_tips.copy()
-    df_tips_temp["letter"] = pd.Series([i] * len(df_tips_temp))
+    df_tips_temp["timestamp"] = pd.Series([i] * len(df_tips_temp))
     df_tips_plus.append(df_tips_temp)
 
 df_tips_plus: pd.DataFrame = pd.concat(df_tips_plus)
@@ -369,10 +369,10 @@ def tip_stats(data: pd.DataFrame) -> pd.DataFrame:
 
 
 HSA = HotSpotAnalysis(
-    # data=df_tips_plus.groupby(["sex", "size"], observed=True),
-    data=df_tips_plus.groupby("sex", observed=True),
+    # data=df_tips_plus.groupby(["sex", "timestamp"], observed=True),
+    data=df_tips_plus.groupby("timestamp", observed=True),
     # data=df_tips_plus,
-    target_cols=["day", "smoker", "letter"],
+    target_cols=["day", "smoker", "size"],
     interaction_limit=3,
     objective_function=tip_stats,
 )
@@ -389,29 +389,54 @@ HSA.search_hsa_output(search_terms="Yes", search_across="values", search_type="a
 
 # %%
 HSA.search_hsa_output(
-    search_terms="Yes", search_across="values", search_type="any", n_row_minimum=400
+    search_terms="Yes", search_across="values", search_type="any", n_row_minimum=10
 )
 
 
-# %%
-HSA.search_hsa_output(search_terms="smoker", search_across="keys", search_type="all")
+# HSA.search_hsa_output(search_terms="smoker", search_across="keys", search_type="all")
+
+# HSA.search_hsa_output(search_terms=["smoker", "day"], search_across="keys", search_type="all")
+
+# HSA.search_hsa_output(search_terms="smoker", search_across="keys", interactions=1)
+
+# HSA.search_hsa_output(search_terms=["Male", "Yes"], search_across="values", search_type="all")
+
+# HSA.search_hsa_output(search_terms=["Fri", "Yes"], search_across="values", search_type="all")
 
 # %%
-HSA.search_hsa_output(
-    search_terms=["smoker", "day"], search_across="keys", search_type="all"
+
+
+#! Test chain laggin using group_combo
+
+hsa_data.head()
+
+df_combo = HSA.search_hsa_output(
+    search_terms=["Fri"], search_across="values", search_type="any", interactions=2
+)
+df_combo
+
+# %%
+
+import json
+
+df_combo["group_combo_dict"] = [json.dumps(x) for x in df_combo["group_combo_dict"]]
+df_combo["combo_dict"] = [json.dumps(x) for x in df_combo["combo_dict"]]
+
+
+df_combo_shifted = df_combo.groupby("combo_dict").shift(1)
+df_combo_shifted
+
+# %%
+df_combo.merge(
+    df_combo_shifted,
+    how="left",
+    left_index=True,
+    right_index=True,
+    suffixes=["", "_l1"],
 )
 
-# %%
-HSA.search_hsa_output(search_terms="smoker", search_across="keys", interactions=1)
 
-# %%
-HSA.search_hsa_output(
-    search_terms=["Male", "Yes"], search_across="values", search_type="all"
-)
+# df_combo.merge()
 
-# %%
-HSA.search_hsa_output(
-    search_terms=["Fri", "Yes"], search_across="values", search_type="all"
-)
 
 # %%
