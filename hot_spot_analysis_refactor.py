@@ -411,19 +411,30 @@ HSA.search_hsa_output(
 hsa_data.head()
 
 df_combo = HSA.search_hsa_output(
-    search_terms=["Fri"], search_across="values", search_type="any", interactions=2
+    search_terms=["Fri", "Thur"],
+    search_across="values",
+    search_type="any",
+    interactions=2,
 )
 df_combo
 
-# %%
+#!! Below is a way to join lags using groupby as a defacto timeseries
+# 1. convert dict to a hashable type (JSON)
+# 2. use shift() to shift the data to be lag 1 (using index)
+# 3. left join shifted (lagged) data onto original (using index)
 
 import json
 
 df_combo["group_combo_dict"] = [json.dumps(x) for x in df_combo["group_combo_dict"]]
 df_combo["combo_dict"] = [json.dumps(x) for x in df_combo["combo_dict"]]
 
+df_combo_shifted = df_combo.groupby(["combo_dict", "interaction_count"]).shift(1)
+df_combo_shifted.drop(
+    inplace=True,
+    axis="columns",
+    labels="hsa_dict",
+)
 
-df_combo_shifted = df_combo.groupby("combo_dict").shift(1)
 df_combo_shifted
 
 # %%
@@ -433,7 +444,7 @@ df_combo.merge(
     left_index=True,
     right_index=True,
     suffixes=["", "_l1"],
-)
+).head(6)
 
 
 # df_combo.merge()
