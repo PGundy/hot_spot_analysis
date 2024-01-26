@@ -131,10 +131,12 @@ class HotSpotAnalysis:
 
             df_grp_stats = df_grp_by_combo.size().reset_index(name="n_rows")
 
+            combination_output_df = df_grp_stats.merge(df_combo_output, on=combo)
+
             combination_output = {
                 "combination": combo,
                 "interaction_count": len(combo),
-                "df": df_grp_stats.merge(df_combo_output),
+                "df": combination_output_df.reset_index(),
             }
             combination_outputs.append(combination_output)
         print("\n")
@@ -306,7 +308,7 @@ class HotSpotAnalysis:
 
         # If we have valid results return them else
         if len(search_results) > 0:
-            return search_results
+            return search_results.drop(columns="hsa_dict")
         else:
             if is_grouped_hsa:
                 extra_msg_search_across = " & group_combo_dict"
@@ -339,15 +341,15 @@ df_tips = sns.load_dataset("tips")
 numbers = np.arange(10)
 df_tips_plus = []
 for i, _ in enumerate(numbers):
-    # print(i)
-    df_tips_temp = df_tips.copy()
-    df_tips_temp["timestamp"] = pd.Series([i] * len(df_tips_temp))
+    scalar = i + 1
+    df_tips_temp = pd.concat([df_tips] * scalar).reset_index(drop=True)
+    df_tips_temp["tip"] += scalar * 1.0
+    df_tips_temp["timestamp"] = pd.Series([scalar] * len(df_tips_temp))
     df_tips_plus.append(df_tips_temp)
 
 df_tips_plus: pd.DataFrame = pd.concat(df_tips_plus)
 
 # %%
-
 
 #! Feature construction + aggregation function!
 df_tips_plus["tip_perc"] = df_tips_plus["tip"] / df_tips_plus["total_bill"]
@@ -360,9 +362,8 @@ def tip_stats(data: pd.DataFrame) -> pd.DataFrame:
             count_tips=pd.NamedAgg("tip", "count"),
             avg_tips=pd.NamedAgg("tip", "mean"),
             avg_tip_perc=pd.NamedAgg("tip_perc", "mean"),
-        )
-        .round(2)
-        .reset_index()
+        ).round(2)
+        # .reset_index()
     )
 
     return tmp
@@ -385,13 +386,21 @@ hsa_data.head(10)
 
 
 # %%
-HSA.search_hsa_output(search_terms="Yes", search_across="values", search_type="any")
+HSA.search_hsa_output(
+    search_terms="Yes",
+    search_across="values",
+    search_type="any",
+)
 
 # %%
 HSA.search_hsa_output(
-    search_terms="Yes", search_across="values", search_type="any", n_row_minimum=10
+    search_terms="Yes",
+    search_across="values",
+    search_type="any",
+    n_row_minimum=10,
 )
 
+# %%
 
 # HSA.search_hsa_output(search_terms="smoker", search_across="keys", search_type="all")
 
@@ -429,13 +438,8 @@ df_combo["group_combo_dict"] = [json.dumps(x) for x in df_combo["group_combo_dic
 df_combo["combo_dict"] = [json.dumps(x) for x in df_combo["combo_dict"]]
 
 df_combo_shifted = df_combo.groupby(["combo_dict", "interaction_count"]).shift(1)
-df_combo_shifted.drop(
-    inplace=True,
-    axis="columns",
-    labels="hsa_dict",
-)
-
 df_combo_shifted
+
 
 # %%
 df_combo.merge(
