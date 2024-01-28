@@ -1,11 +1,12 @@
 """
 Functions to handle list manipulations
 """
+import pandas as pd
 
 
 def remove_none(l: list):
     """
-    Remove ALL None values from a list.
+    Remove all instances of None from a list.
 
     Returns:
         list: All instances of None are removed
@@ -63,3 +64,46 @@ def find_items(
         output = [item in output for item in list1 if item]
 
     return output
+
+
+def lists_to_zipped_dict(
+    keys_column: pd.Series | list, values_column: pd.Series | list
+):
+    """
+    Creates a new column in a DataFrame using two columns as keys and values to form dictionaries.
+
+    Parameters:
+    - df: The DataFrame.
+    - keys_column: Column name for keys in the DataFrame.
+    - values_column: Column name for values in the DataFrame.
+
+    Returns:
+    - The DataFrame with the new column.
+    """
+    list_of_zipped_dicts = [
+        dict(zip(keys, values)) for keys, values in zip(keys_column, values_column)
+    ]
+    return list_of_zipped_dicts
+
+
+def zip_lists_of_dicts(list1, list2):
+    """
+    Zips two lists of dictionaries and returns a new list of dictionaries.
+
+    Parameters:
+    - list1: The first list of dictionaries.
+    - list2: The second list of dictionaries.
+
+    Returns:
+    - A new list of dictionaries formed by zipping the corresponding dictionaries.
+    """
+    return [dict(list(d1.items()) + list(d2.items())) for d1, d2 in zip(list1, list2)]
+
+
+# Example usage:
+list_of_dicts1 = [{"a": 1, "b": 2}, {"x": 10, "y": 20}]
+list_of_dicts2 = [{"c": 3, "d": 4}, {"z": 30, "w": 40}]
+
+result_list_of_dicts = zip_lists_of_dicts(list_of_dicts1, list_of_dicts2)
+
+print(result_list_of_dicts)

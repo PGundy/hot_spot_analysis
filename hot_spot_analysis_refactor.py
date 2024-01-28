@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from utils2 import combos, grouped_df, lists
+from utils2 import combos, general, grouped_df, lists
 
 
 # %%
@@ -48,7 +48,6 @@ class HotSpotAnalysis:
 
         if grouped_df.is_grouped(self.data_input):
             self.pre_grouped_vars = grouped_df.get_groups(self.data_input)
-            print(f"Input data is grouped by: {self.pre_grouped_vars}")
 
     def _build_combos(self):
         """fake doc string"""
@@ -90,18 +89,16 @@ class HotSpotAnalysis:
         if self.data_prep.empty:
             self._build_data()
 
-        if len(self.data_prep) > row_limit:
-            if verbose:
-                print(f"Using random sample of {row_limit} rows")
-            test_df = self.data_prep.sample(row_limit)
-        else:
-            test_df = self.data_prep
+        if verbose:
+            print(f"Using random sample of {row_limit} rows")
+
+        test_df = self.data_prep.sample(row_limit, replace=True)
 
         try:
             output = self.objective_function(test_df.groupby("Overall"))
         except:
             raise ValueError(
-                "The function supplied to 'objective_function' is not compatible\n\nThe function must worked on grouped data frames, and thus all feature engineering must be done in the agg() or subsequently."
+                "The function supplied to 'objective_function' is not compatible\n\nThe function must be able to run on a grouped data frame."
             )
 
         self.obj_func_tested = True
@@ -120,7 +117,6 @@ class HotSpotAnalysis:
 
         if self.hsa_raw_output_dicts is not None:
             print("The objective function has already been run.")
-            pass
 
         combination_outputs = []
         print("\n")
@@ -129,9 +125,9 @@ class HotSpotAnalysis:
             df_grp_by_combo = self.data_prep.groupby(combo, observed=True)
             df_combo_output = self.objective_function(df_grp_by_combo)
 
-            df_grp_stats = df_grp_by_combo.size().reset_index(name="n_rows")
+            df_grp_nrows = df_grp_by_combo.size().reset_index(name="n_rows")
 
-            combination_output_df = df_grp_stats.merge(df_combo_output, on=combo)
+            combination_output_df = df_grp_nrows.merge(df_combo_output, on=combo)
 
             combination_output = {
                 "combination": combo,
@@ -144,94 +140,86 @@ class HotSpotAnalysis:
 
     def process_hsa_raw_output_dicts(self):
         if not self.hsa_output_df.empty:
-            return print("The raw HSA data output has already been processed.")
+            print("The HSA data output already exsists.")
+            return
 
         if self.hsa_raw_output_dicts is None:
             self.run_obj_func_iterations()
 
-        hsa_dfs = []
+        combo_dfs = []
         for row_i, _ in enumerate(self.hsa_raw_output_dicts):
             combo_i_dict = self.hsa_raw_output_dicts[row_i]
 
-            combo_combination = combo_i_dict["combination"]
-            combo_interaction_count = combo_i_dict["interaction_count"]
-            combo_df = combo_i_dict["df"]
-            combo_df_rows = len(combo_df)
+            combo_i_combination = combo_i_dict["combination"]
+            combo_i_interaction_count = combo_i_dict["interaction_count"]
+            combo_i_df = combo_i_dict["df"]
+            combo_i_df_rows = len(combo_i_df)
 
-            # This method with a for loop should preserve column order b/c sets do NOT preserve ordering!
-            combo_df_obj_func_calcs = []
-            for col in combo_df.columns:
-                if col not in combo_combination:
-                    combo_df_obj_func_calcs.append(col)
-            # combo_df_obj_func_calcs
-
-            combo_df["interaction_count"] = combo_interaction_count
+            combo_i_df_obj_func_calcs = lists.find_items(
+                combo_i_df.columns,
+                combo_i_combination,
+                return_matching=False,
+            )
 
             #! Below we transform the keys & values into a dict
-            combo_df["combo_keys"] = pd.Series([combo_combination] * combo_df_rows)
-            combo_df["combo_values"] = combo_df[combo_combination].apply(
+            combo_i_df["combo_keys"] = pd.Series(
+                [combo_i_combination] * combo_i_df_rows
+            )
+            combo_i_df["combo_values"] = combo_i_df[combo_i_combination].apply(
                 lambda row: list(row.values.astype(str)), axis=1
             )
 
-            combination_dicts = []
-            for row in range(combo_df_rows):
-                combination_dict = dict(
-                    zip(
-                        combo_df["combo_keys"][row],
-                        combo_df["combo_values"][row],
-                    )
-                )
-                combination_dicts.append(combination_dict)
+            combo_i_df["combo_dict"] = lists.lists_to_zipped_dict(
+                combo_i_df["combo_keys"],
+                combo_i_df["combo_values"],
+            )
 
-            combo_df["combo_dict"] = combination_dicts
-            combo_df.drop(
+            combo_i_df.drop(
                 columns=["combo_keys", "combo_values"],
                 inplace=True,
             )
 
+            combo_i_df["interaction_count"] = combo_i_interaction_count
+
             hsa_columns = list(
                 # Dynamically grab the HSA columns using sets
-                set(combo_df.columns)
-                - set(combo_df_obj_func_calcs)
-                - set(combo_combination)
+                # NOTE: This preserves the column order
+                set(combo_i_df.columns)
+                - set(combo_i_df_obj_func_calcs)
+                - set(combo_i_combination)
             )
-            hsa_columns.sort()
 
-            column_order = hsa_columns + combo_df_obj_func_calcs
+            column_order = hsa_columns + combo_i_df_obj_func_calcs
 
-            combo_df_final = combo_df[column_order]
-            hsa_dfs.append(combo_df_final)
+            combo_i_df_final = combo_i_df[column_order]
+            combo_dfs.append(combo_i_df_final)
 
-        hsa_df = pd.concat(hsa_dfs)
-        # hsa_df = hsa_df.reset_index(names=["combo_index"])
-        hsa_df = hsa_df.reset_index(drop=True)
+        hsa_df = pd.concat(combo_dfs).reset_index(drop=True)
         self.hsa_output_df = hsa_df
 
     def pop_pre_grouped_vars(self):
         #!! move into process_hsa_raw_output_dicts() at end
         # TODO: once moved add a condition that the following var is not None
-        grp_vars = self.pre_grouped_vars
 
-        group_combo_dicts: list[dict] = []
+        if self.pre_grouped_vars is None:
+            # no changes if input data is not grouped
+            return
+
+        group_by_dicts: list[dict] = []
         for _, combo_dict_i in enumerate(self.hsa_output_df["combo_dict"]):
-            group_combo_dict = {}
-            if grp_vars is not None:
-                for grp_var in grp_vars:
-                    group_combo_dict[grp_var] = combo_dict_i.pop(grp_var)
+            group_by_dict = general.pop_keys(combo_dict_i, self.pre_grouped_vars)
+            group_by_dicts.append(group_by_dict)
 
-            group_combo_dicts.append(group_combo_dict)
-
-        self.hsa_output_df["group_combo_dict"] = group_combo_dicts
+        self.hsa_output_df["group_by_dict"] = group_by_dicts
 
         # Now reorder the columns so our grouped
-        all_columns_with_dupes = ["group_combo_dict"] + list(self.hsa_output_df.columns)
+        all_columns_with_dupes = ["group_by_dict"] + list(self.hsa_output_df.columns)
         all_columns_ordered = lists.unique(all_columns_with_dupes)
         self.hsa_output_df = self.hsa_output_df[all_columns_ordered]
 
     def run_hsa(self):
         self.process_hsa_raw_output_dicts()
-        if self.pre_grouped_vars is not None:
-            self.pop_pre_grouped_vars()
+        self.pop_pre_grouped_vars()
         print("HSA has been run & the output has been processed.")
 
     def export_hsa_output_df(self):
@@ -257,6 +245,7 @@ class HotSpotAnalysis:
         if isinstance(interactions, int):
             interactions = [interactions]
         if interactions == [0]:
+            # default to all possible interactions
             interactions = list(np.arange(self.interaction_limit) + 1)
 
         df = hsa_df[
@@ -265,13 +254,12 @@ class HotSpotAnalysis:
         ].copy()
         df.reset_index(inplace=True, drop=True)
 
-        is_grouped_hsa = "group_combo_dict" in df.columns
+        is_grouped_hsa = "group_by_dict" in df.columns
         if is_grouped_hsa:
             # If grouped we union our output dict column
-            hsa_dict = []
-            for i, _ in enumerate(df["combo_dict"]):
-                hsa_dict.append(df.group_combo_dict[i] | df.combo_dict[i])
-            df["hsa_dict"] = hsa_dict
+            df["hsa_dict"] = lists.zip_lists_of_dicts(
+                df["group_by_dict"], df["combo_dict"]
+            )
         else:
             df["hsa_dict"] = hsa_df["combo_dict"]
 
@@ -310,7 +298,7 @@ class HotSpotAnalysis:
             return search_results.drop(columns="hsa_dict")
         else:
             if is_grouped_hsa:
-                extra_msg_search_across = " & group_combo_dict"
+                extra_msg_search_across = " & group_by_dict"
             else:
                 extra_msg_search_across = ""
 
@@ -355,14 +343,11 @@ df_tips_plus["tip_perc"] = df_tips_plus["tip"] / df_tips_plus["total_bill"]
 
 def tip_stats(data: pd.DataFrame) -> pd.DataFrame:
     """fake"""
-    tmp = (
-        data.agg(
-            count_tips=pd.NamedAgg("tip", "count"),
-            avg_tips=pd.NamedAgg("tip", "mean"),
-            avg_tip_perc=pd.NamedAgg("tip_perc", "mean"),
-        ).round(2)
-        # .reset_index()
-    )
+    tmp = data.agg(
+        count_tips=pd.NamedAgg("tip", "count"),
+        avg_tips=pd.NamedAgg("tip", "mean"),
+        avg_tip_perc=pd.NamedAgg("tip_perc", "mean"),
+    ).round(2)
 
     return tmp
 
@@ -385,9 +370,7 @@ hsa_data.head(10)
 
 # %%
 HSA.search_hsa_output(
-    search_terms="Yes",
-    search_across="values",
-    search_type="any",
+    search_terms="Thur", search_across="values", search_type="any", interactions=2
 )
 
 # %%
@@ -395,7 +378,7 @@ HSA.search_hsa_output(
     search_terms="Yes",
     search_across="values",
     search_type="any",
-    n_row_minimum=10,
+    n_row_minimum=50,
 )
 
 # %%
@@ -432,7 +415,7 @@ df_combo
 
 import json
 
-df_combo["group_combo_dict"] = [json.dumps(x) for x in df_combo["group_combo_dict"]]
+df_combo["group_by_dict"] = [json.dumps(x) for x in df_combo["group_by_dict"]]
 df_combo["combo_dict"] = [json.dumps(x) for x in df_combo["combo_dict"]]
 
 df_combo_shifted = df_combo.groupby(["combo_dict", "interaction_count"]).shift(1)
