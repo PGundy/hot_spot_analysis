@@ -43,12 +43,12 @@ class HotSpotAnalysis:
         self.hsa_output_df: pd.DataFrame = pd.DataFrame(None)
 
     def prep_class(self):
-        """If the user's data is grouped we resolve that here."""
+        """Extract any groups & the dataframe from the init"""
+        self.data_prep = grouped_df.return_data(self.data_input)
+
         if grouped_df.is_grouped(self.data_input):
             self.pre_grouped_vars = grouped_df.get_groups(self.data_input)
             print(f"Input data is grouped by: {self.pre_grouped_vars}")
-
-        self.data_prep = grouped_df.return_data(self.data_input)
 
     def _build_combos(self):
         """fake doc string"""
@@ -144,8 +144,7 @@ class HotSpotAnalysis:
 
     def process_hsa_raw_output_dicts(self):
         if not self.hsa_output_df.empty:
-            print("The raw HSA data output has already been processed.")
-            pass
+            return print("The raw HSA data output has already been processed.")
 
         if self.hsa_raw_output_dicts is None:
             self.run_obj_func_iterations()
@@ -162,15 +161,13 @@ class HotSpotAnalysis:
             # This method with a for loop should preserve column order b/c sets do NOT preserve ordering!
             combo_df_obj_func_calcs = []
             for col in combo_df.columns:
-                if col in combo_combination:
-                    pass
-                else:
+                if col not in combo_combination:
                     combo_df_obj_func_calcs.append(col)
-            combo_df_obj_func_calcs
-
-            # return combo_i_dict
+            # combo_df_obj_func_calcs
 
             combo_df["interaction_count"] = combo_interaction_count
+
+            #! Below we transform the keys & values into a dict
             combo_df["combo_keys"] = pd.Series([combo_combination] * combo_df_rows)
             combo_df["combo_values"] = combo_df[combo_combination].apply(
                 lambda row: list(row.values.astype(str)), axis=1
@@ -211,6 +208,8 @@ class HotSpotAnalysis:
         self.hsa_output_df = hsa_df
 
     def pop_pre_grouped_vars(self):
+        #!! move into process_hsa_raw_output_dicts() at end
+        # TODO: once moved add a condition that the following var is not None
         grp_vars = self.pre_grouped_vars
 
         group_combo_dicts: list[dict] = []
@@ -315,7 +314,6 @@ class HotSpotAnalysis:
             else:
                 extra_msg_search_across = ""
 
-            print()
             msg_search_terms = ",".join(["'" + x + "'" for x in search_terms])
             msg_interactions = ",".join(map(str, interactions))
             search_failed_helper = (
@@ -447,7 +445,7 @@ df_combo.merge(
     how="left",
     left_index=True,
     right_index=True,
-    suffixes=["", "_l1"],
+    suffixes=["", "_lag1"],
 ).head(6)
 
 
