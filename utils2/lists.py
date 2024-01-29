@@ -66,9 +66,7 @@ def find_items(
     return output
 
 
-def lists_to_zipped_dict(
-    keys_column: pd.Series | list, values_column: pd.Series | list
-):
+def lists_to_dict(keys_column: pd.Series | list, values_column: pd.Series | list):
     """
     Creates a new column in a DataFrame using two columns as keys and values to form dictionaries.
 
