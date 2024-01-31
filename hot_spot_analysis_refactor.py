@@ -223,6 +223,40 @@ class HotSpotAnalysis:
         self.pop_pre_grouped_vars()
         print("HSA has been run & the output has been processed.")
 
+    def lag_hsa_by_group(
+        self,
+        lag_iterations: int | list[int] = [1],
+    ):
+        if self.pre_grouped_vars is None:
+            return TypeError("Data provided to HSA was not grouped.")
+        if isinstance(lag_iterations, int):
+            lag_iterations = [lag_iterations]
+
+        # NOTE: This lag operations requires hashable, so we convert list(dict) --> JSON, compute the lags & merge, JSON -->  dict(list)
+        df = self.hsa_output_df.copy()
+
+        data_grouped_by = ", ".join(self.pre_grouped_vars)
+        print(f"Attempting to lag data across: {data_grouped_by}")
+
+        df["combo_dict"] = general.dict_to_json(df["combo_dict"])
+
+        # Loop through the lags & merge them back into df
+        for lag_i in lag_iterations:
+            print(f"Running lag: {lag_i}")
+            df_lag_i = df.groupby(["combo_dict", "interaction_count"]).shift(lag_i)
+
+            df = df.merge(
+                df_lag_i[["group_by_dict", "avg_tips"]],
+                how="left",
+                left_index=True,
+                right_index=True,
+                suffixes=["", f"_lag{lag_i}"],
+            )
+
+        df["combo_dict"] = general.json_to_dict(df["combo_dict"])
+
+        return df
+
     def export_hsa_output_df(self):
         if self.hsa_output_df.empty:
             raise ValueError(
@@ -397,52 +431,15 @@ HSA.search_hsa_output(
 # %%
 
 
-#! Test chain laggin using group_combo
+df_lagged = HSA.lag_hsa_by_group()
 
-
-def hsa_lag_by_group(
-    df: pd.DataFrame = HSA.hsa_output_df.copy(),
-    lag_iterations: int | list[int] = [1],
-):
-    # NOTE: requires JSON as it is hashable for the lag & merge however it is converted back to a dict at before updating the output object.
-
-    data_grouped_by = ", ".join(df.group_by_dict[0].keys())
-    print(f"Attempting to lag data across: {data_grouped_by}")
-
-    if isinstance(lag_iterations, int):
-        lag_iterations = [lag_iterations]
-
-    df["combo_dict"] = general.dict_to_json(df["combo_dict"])
-
-    for lag_i in lag_iterations:
-        print(f"Running lag: {lag_i}")
-        df_lag_i = df.groupby(["combo_dict", "interaction_count"]).shift(lag_i)
-
-        df = df.merge(
-            df_lag_i[["group_by_dict", "avg_tips"]],
-            how="left",
-            left_index=True,
-            right_index=True,
-            suffixes=["", f"_lag{lag_i}"],
-        )
-
-    df["combo_dict"] = general.json_to_dict(df["combo_dict"])
-
-    return df
-
-
-df_lagged = hsa_lag_by_group(lag_iterations=[1, 2])
-df_lagged.head()
-
-
-# %%
 
 HSA.search_hsa_output(
     hsa_df=df_lagged,
     search_across="values",
-    search_terms=["Thur", "Yes"],
+    search_terms=["Thur"],
     search_type="any",
-    interactions=3,
+    interactions=2,
 )
 
 
