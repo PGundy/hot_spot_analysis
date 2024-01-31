@@ -132,7 +132,7 @@ class HotSpotAnalysis:
             combination_output = {
                 "combination": combo,
                 "interaction_count": len(combo),
-                "df": combination_output_df.reset_index(),
+                "df": combination_output_df.reset_index(drop=True),
             }
             combination_outputs.append(combination_output)
         print("\n")
@@ -241,12 +241,15 @@ class HotSpotAnalysis:
         df["combo_dict"] = general.dict_to_json(df["combo_dict"])
 
         # Loop through the lags & merge them back into df
+        df_baseeline = df.copy()
         for lag_i in lag_iterations:
             print(f"Running lag: {lag_i}")
-            df_lag_i = df.groupby(["combo_dict", "interaction_count"]).shift(lag_i)
+            df_lag_i = df_baseeline.groupby(["combo_dict", "interaction_count"]).shift(
+                lag_i
+            )
 
             df = df.merge(
-                df_lag_i[["group_by_dict", "avg_tips"]],
+                df_lag_i,
                 how="left",
                 left_index=True,
                 right_index=True,
@@ -379,7 +382,7 @@ df_tips_plus["tip_perc"] = df_tips_plus["tip"] / df_tips_plus["total_bill"]
 def tip_stats(data: pd.DataFrame) -> pd.DataFrame:
     """fake"""
     tmp = data.agg(
-        count_tips=pd.NamedAgg("tip", "count"),
+        #!count_tips=pd.NamedAgg("tip", "count"),
         avg_tips=pd.NamedAgg("tip", "mean"),
         avg_tip_perc=pd.NamedAgg("tip_perc", "mean"),
     ).round(2)
@@ -431,7 +434,7 @@ HSA.search_hsa_output(
 # %%
 
 
-df_lagged = HSA.lag_hsa_by_group()
+df_lagged = HSA.lag_hsa_by_group(lag_iterations=[1, 3, 9])
 
 
 HSA.search_hsa_output(
@@ -439,7 +442,7 @@ HSA.search_hsa_output(
     search_across="values",
     search_terms=["Thur"],
     search_type="any",
-    interactions=2,
+    interactions=[2],
 )
 
 
