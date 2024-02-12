@@ -391,9 +391,8 @@ def tip_stats(data: pd.DataFrame) -> pd.DataFrame:
 
 
 HSA = HotSpotAnalysis(
-    # data=df_tips_plus.groupby(["sex", "timestamp"], observed=True),
-    data=df_tips_plus.groupby("timestamp", observed=True),
-    # data=df_tips_plus,
+    data=df_tips_plus,
+    # data=df_tips_plus.groupby("timestamp", observed=True),
     target_cols=["day", "smoker", "size"],
     interaction_limit=3,
     objective_function=tip_stats,
@@ -403,12 +402,14 @@ HSA = HotSpotAnalysis(
 # HSA.test_objective_function(verbose=False)
 HSA.run_hsa()
 hsa_data = HSA.export_hsa_output_df()
-hsa_data.head(10)
 
 
 # %%
 HSA.search_hsa_output(
-    search_terms="Thur", search_across="values", search_type="any", interactions=2
+    search_terms="Thur",
+    search_across="values",
+    search_type="any",
+    interactions=[1, 2],
 )
 
 # %%
