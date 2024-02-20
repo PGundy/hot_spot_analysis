@@ -49,6 +49,28 @@ class HotSpotAnalysis:
         if grouped_df.is_grouped(self.data_input):
             self.pre_grouped_vars = grouped_df.get_groups(self.data_input)
 
+    def _confirm_target_cols(self):
+        """Check if the target_cols are found in the input data."""
+        valid_target_columns = lists.find_items(
+            self.target_cols,
+            self.data_prep.columns,
+            return_bools=True,
+        )
+
+        if not all(valid_target_columns):
+            invalid_target_cols = lists.find_items(
+                self.target_cols,
+                self.data_prep.columns,
+                return_matching=False,
+            )
+
+            error = f"""'target_cols' has an invalid input. Resolve the following:
+            
+            Problematic target_cols: {', '.join(invalid_target_cols)}
+            All possible valid target_cols: {', '.join(self.data_prep.columns)}
+            """
+            raise ValueError(error)
+
     def _build_combos(self):
         """fake doc string"""
         if self.data_prep.empty:
@@ -78,7 +100,7 @@ class HotSpotAnalysis:
         if self.data_prep.empty:
             self.prep_class()
 
-        # TODO Add validation checks here for 'target_cols' in 'self.data_input', etc.
+        self._confirm_target_cols()
 
         self.data_prep["Overall"] = "Overall"
         print("Data passed checks, and is ready for analysis.")
@@ -93,7 +115,9 @@ class HotSpotAnalysis:
             self._build_data()
 
         if verbose:
-            print(f"Using random sample of {row_limit} rows")
+            print(
+                f"Using random sample of {row_limit} rows. Note that rows will be recycled to meet row_limit if data has insufficient rows."
+            )
 
         test_df = self.data_prep.sample(row_limit, replace=True)
 
@@ -402,8 +426,8 @@ def tip_stats(data: pd.DataFrame) -> pd.DataFrame:
 
 
 HSA = HotSpotAnalysis(
-    data=df_tips_plus,
-    # data=df_tips_plus.groupby("timestamp", observed=True),
+    # data=df_tips_plus,
+    data=df_tips_plus.groupby("timestamp", observed=True),
     target_cols=["day", "smoker", "size"],
     interaction_limit=3,
     objective_function=tip_stats,
