@@ -26,16 +26,18 @@ class HotSpotAnalysis:
         self,  # Default values
         data: pd.DataFrame = pd.DataFrame(None),  # HSA.data.empty -> True
         target_cols: list = [None],  # []
+        time_period: list = [None],  # []
         interaction_limit: int = 3,  # 3
         objective_function=None,
     ):
         self.data_input = data
         self.target_cols = lists.unique(target_cols, drop_none=True)
+        self.time_period = lists.unique(time_period, drop_none=True)
         self.interaction_limit = interaction_limit
         self.objective_function = objective_function
 
         # Set defaults for variables set via functions
-        self.pre_grouped_vars: list[str] = None
+        self.grouped_by: list[str] = None
         self.data_prep: pd.DataFrame = pd.DataFrame(None)
         self.combinations: list[list[str]] = None
         self.obj_func_tested: bool = False
@@ -47,27 +49,39 @@ class HotSpotAnalysis:
         self.data_prep = grouped_df.return_data(self.data_input)
 
         if grouped_df.is_grouped(self.data_input):
-            self.pre_grouped_vars = grouped_df.get_groups(self.data_input)
+            self.grouped_by = grouped_df.get_groups(self.data_input)
 
-    def _confirm_target_cols(self):
+    def _validate_input(self, validate=None):
         """Check if the target_cols are found in the input data."""
-        valid_target_columns = lists.find_items(
-            self.target_cols,
-            self.data_prep.columns,
+
+        if validate == "target_cols":
+            input_to_validate = self.target_cols
+        elif validate == "time_period":
+            if not self.time_period:
+                return
+            input_to_validate = self.time_period
+        else:
+            raise ValueError("validate must be either: 'target_cols' or 'time_period")
+
+        valid_inputs = self.data_prep.columns
+
+        valid_columns_bools = lists.find_items(
+            input_to_validate,
+            valid_inputs,
             return_bools=True,
         )
 
-        if not all(valid_target_columns):
-            invalid_target_cols = lists.find_items(
-                self.target_cols,
-                self.data_prep.columns,
+        if not all(valid_columns_bools):
+            invalid_inputs = lists.find_items(
+                input_to_validate,
+                valid_inputs,
                 return_matching=False,
             )
 
-            error = f"""'target_cols' has an invalid input. Resolve the following:
+            error = f"""'{validate}' contains an invalid input. Resolve the following:
             
-            Problematic target_cols: {', '.join(invalid_target_cols)}
-            All possible valid target_cols: {', '.join(self.data_prep.columns)}
+            Problematic '{validate}': {', '.join(invalid_inputs)}
+            Valid inputs: {', '.join(valid_inputs)}
             """
             raise ValueError(error)
 
@@ -83,10 +97,17 @@ class HotSpotAnalysis:
 
         combinations = [["Overall"]] + combinations
 
-        if self.pre_grouped_vars is not None:
+        if self.grouped_by is not None:
             # If the input data is grouped we add the groups!
             combinations = grouped_df.add_groups_to_combos(
-                group_vars=self.pre_grouped_vars, combos=combinations
+                group_vars=self.grouped_by,
+                combos=combinations,
+            )
+
+        if self.time_period:
+            combinations = grouped_df.add_groups_to_combos(
+                group_vars=self.time_period,
+                combos=combinations,
             )
 
         self.combinations = combinations
@@ -100,7 +121,8 @@ class HotSpotAnalysis:
         if self.data_prep.empty:
             self.prep_class()
 
-        self._confirm_target_cols()
+        self._validate_input("target_cols")
+        self._validate_input("time_period")
 
         self.data_prep["Overall"] = "Overall"
         print("Data passed checks, and is ready for analysis.")
@@ -157,10 +179,7 @@ class HotSpotAnalysis:
             combination_output_df = df_grp_nrows.merge(df_combo_output, on=combo)
 
             if "Overall" in combo:
-                if HSA.pre_grouped_vars is None:
-                    interaction_count = 0
-                else:
-                    interaction_count = 1
+                interaction_count = len(combo) - 1
             else:
                 interaction_count = len(combo)
 
@@ -232,48 +251,65 @@ class HotSpotAnalysis:
         hsa_df = pd.concat(combo_dfs).reset_index(drop=True)
         self.hsa_output_df = hsa_df
 
-    def pop_pre_grouped_vars(self):
+    def pop_key_off_combo_dict(self, pop_type=None):
         #!! move into process_hsa_raw_output_dicts() at end
         # TODO: once moved add a condition that the following var is not None
 
-        if self.pre_grouped_vars is None:
-            # no changes if input data is not grouped
-            return
+        if pop_type == "grouped_by":
+            if self.grouped_by is None:
+                return
+            pop_key = self.grouped_by
+            pop_dict = "grouped_by_dict"
+        elif pop_type == "time_period":
+            if not self.time_period:
+                return
+            pop_key = self.time_period
+            pop_dict = "time_period_dict"
+        else:
+            raise ValueError(
+                "Invalid pop_type. Must be either: 'grouped_by' or 'time_period'"
+            )
 
-        group_by_dicts = []
+        popped_dicts = []
         for _, combo_dict_i in enumerate(self.hsa_output_df["combo_dict"]):
-            group_by_dict = general.pop_keys(combo_dict_i, self.pre_grouped_vars)
-            group_by_dicts.append(group_by_dict)
+            popped_dict = general.pop_keys(combo_dict_i, pop_key)
+            popped_dicts.append(popped_dict)
 
-        self.hsa_output_df["group_by_dict"] = group_by_dicts
+        self.hsa_output_df[pop_dict] = popped_dicts
 
-        # Reorder our columns to have our poped group the first column
-        all_columns_with_dupes = ["group_by_dict"] + list(self.hsa_output_df.columns)
+        # Reorder columns to have time_period then all others
+        all_columns_with_dupes = [pop_dict] + list(self.hsa_output_df.columns)
         all_columns_ordered = lists.unique(all_columns_with_dupes)
         self.hsa_output_df = self.hsa_output_df[all_columns_ordered]
 
     def run_hsa(self):
         self.process_hsa_raw_output_dicts()
-        self.pop_pre_grouped_vars()
+        self.pop_key_off_combo_dict(pop_type="grouped_by")
+        self.pop_key_off_combo_dict(pop_type="time_period")
         print("HSA has been run & the output has been processed.")
 
-    def lag_hsa_by_group(
+    def lag_hsa_by_time_period(
         self,
         lag_iterations: int | list[int] = [1],
     ):
+        #!!! TODO change this to ONLY work on 'time_period'!
         # NOTE: This lag operations requires hashable, so we convert list(dict) --> JSON, compute the lags & merge, JSON -->  dict(list)
 
-        if self.pre_grouped_vars is None:
+        if not self.time_period:
             return TypeError("Data provided to HSA was not grouped.")
         if isinstance(lag_iterations, int):
             lag_iterations = [lag_iterations]
 
         df = self.hsa_output_df.copy()
 
-        data_grouped_by = ", ".join(self.pre_grouped_vars)
-        print(f"Attempting to lag data across: {data_grouped_by}")
+        lag_across = ", ".join(self.time_period)
+        print(f"Attempting to lag data across: {lag_across}")
 
-        df["combo_dict"] = general.dict_to_json(df["combo_dict"])
+        dict_columns = ["combo_dict"]
+        if self.grouped_by is not None:
+            dict_columns = ["grouped_by_dict"] + dict_columns
+        for dict_column in dict_columns:
+            df[dict_column] = general.dict_to_json(df[dict_column])
 
         # Loop through the lags & merge them back into df
         df_baseline = df.copy()
@@ -291,7 +327,8 @@ class HotSpotAnalysis:
                 suffixes=["", f"_lag{lag_i}"],
             )
 
-        df["combo_dict"] = general.json_to_dict(df["combo_dict"])
+        for dict_column in dict_columns:
+            df[dict_column] = general.json_to_dict(df[dict_column])
 
         return df
 
@@ -305,14 +342,16 @@ class HotSpotAnalysis:
     def search_hsa_output(
         self,
         hsa_df: pd.DataFrame = pd.DataFrame(None),
-        search_across: str = "keys",
         search_terms: str | list[str] = None,
+        search_across: str = "keys",
         search_type: str = "any",
         interactions: int | list[int] = [0],  # default defined below
         n_row_minimum: int = 0,
     ):
         # TODO: add check to see if 'self.hsa_output_df' is defined.
         if hsa_df.empty:
+            if HSA.hsa_output_df.empty:
+                raise UserWarning("You must first run: run_hsa()")
             hsa_df = self.hsa_output_df.copy()
 
         if isinstance(interactions, int):
@@ -327,14 +366,18 @@ class HotSpotAnalysis:
         ].copy()
         df.reset_index(inplace=True, drop=True)
 
-        is_grouped_hsa = "group_by_dict" in df.columns
-        if is_grouped_hsa:
-            # If grouped we union our output dict column
+        has_grouped_by_dict = "grouped_by_dict" in df.columns
+        has_time_period_dict = "time_period_dict" in df.columns
+
+        df["hsa_dict"] = df["combo_dict"]
+        if has_grouped_by_dict:
             df["hsa_dict"] = lists.zip_lists_of_dicts(
-                df["group_by_dict"], df["combo_dict"]
+                df["grouped_by_dict"], df["hsa_dict"]
             )
-        else:
-            df["hsa_dict"] = hsa_df["combo_dict"]
+        if has_time_period_dict:
+            df["hsa_dict"] = lists.zip_lists_of_dicts(
+                df["time_period_dict"], df["hsa_dict"]
+            )
 
         if isinstance(search_terms, str):
             search_terms = [search_terms]
@@ -346,14 +389,16 @@ class HotSpotAnalysis:
             raise ValueError(f"'search_type' must be either: {search_types}")
         #! END
 
-        search_across_types = ["keys", "values"]
         search_vector = []
-        if search_across not in search_across_types:
-            raise ValueError(f"'type' must be equal to either {search_across_types}")
-        elif search_across == "keys":
+        if search_across in ["key", "value"]:
+            print("Update search_across to 'keys' or 'values'")
+            search_across = search_across + "s"
+        if search_across == "keys":
             search_vector = [list(x.keys()) for x in df["hsa_dict"]]
         elif search_across == "values":
             search_vector = [list(x.values()) for x in df["hsa_dict"]]
+        else:
+            raise ValueError("search_across must be either: 'keys' or 'values'")
 
         if search_type == "all":
             search_results_bool = [search_terms == sorted(x) for x in search_vector]
@@ -370,8 +415,10 @@ class HotSpotAnalysis:
         if len(search_results) > 0:
             return search_results.drop(columns="hsa_dict")
         else:
-            if is_grouped_hsa:
-                extra_msg_search_across = " & group_by_dict"
+            if has_time_period_dict:
+                extra_msg_search_across = " & time_period_dict"
+            if has_grouped_by_dict:
+                extra_msg_search_across = " & grouped_by_dict"
             else:
                 extra_msg_search_across = ""
 
@@ -389,7 +436,8 @@ class HotSpotAnalysis:
                 + f"search_type: '{search_type}' of the search_terms"
                 + "\n\t"
                 + f"interactions: {msg_interactions}"
-                + "\n\n"
+                + "\n\t"
+                + f"n_row_minimum: {n_row_minimum}"
             )
             raise ValueError(search_failed_helper)
 
@@ -397,7 +445,7 @@ class HotSpotAnalysis:
 # %%
 
 df_tips = sns.load_dataset("tips")
-numbers = np.arange(3)
+numbers = np.arange(5)
 df_tips_plus = []
 for i, _ in enumerate(numbers):
     scalar = i + 1
@@ -426,9 +474,10 @@ def tip_stats(data: pd.DataFrame) -> pd.DataFrame:
 
 
 HSA = HotSpotAnalysis(
-    # data=df_tips_plus,
-    data=df_tips_plus.groupby("timestamp", observed=True),
+    data=df_tips_plus,
+    # data=df_tips_plus.groupby("sex", observed=True),
     target_cols=["day", "smoker", "size"],
+    time_period=["timestamp"],
     interaction_limit=3,
     objective_function=tip_stats,
 )
@@ -444,16 +493,17 @@ HSA.search_hsa_output(
     search_terms="Thur",
     search_across="values",
     search_type="any",
-    interactions=[1, 2],
-)
+    interactions=[1, 2, 3],
+).head()
 
 # %%
 HSA.search_hsa_output(
     search_terms="Yes",
     search_across="values",
     search_type="any",
+    # interactions=[2,3],
     n_row_minimum=50,
-)
+).head(10)
 
 # %%
 
@@ -470,9 +520,9 @@ HSA.search_hsa_output(
 # %%
 
 
-df_lagged = HSA.lag_hsa_by_group(lag_iterations=[1, 3, 9])
+df_lagged = HSA.lag_hsa_by_time_period(lag_iterations=[1, 3])
 
-
+# %%
 HSA.search_hsa_output(
     hsa_df=df_lagged,
     search_across="values",
