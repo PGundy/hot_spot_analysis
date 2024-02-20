@@ -55,8 +55,11 @@ class HotSpotAnalysis:
             self.prep_class()
 
         combinations = combos.create_combos(
-            target_cols=self.target_cols, interaction_max=self.interaction_limit
+            target_cols=self.target_cols,
+            interaction_max=self.interaction_limit,
         )
+
+        combinations = [["Overall"]] + combinations
 
         if self.pre_grouped_vars is not None:
             # If the input data is grouped we add the groups!
@@ -129,9 +132,17 @@ class HotSpotAnalysis:
 
             combination_output_df = df_grp_nrows.merge(df_combo_output, on=combo)
 
+            if "Overall" in combo:
+                if HSA.pre_grouped_vars is None:
+                    interaction_count = 0
+                else:
+                    interaction_count = 1
+            else:
+                interaction_count = len(combo)
+
             combination_output = {
                 "combination": combo,
-                "interaction_count": len(combo),
+                "interaction_count": interaction_count,
                 "df": combination_output_df.reset_index(drop=True),
             }
             combination_outputs.append(combination_output)
@@ -151,9 +162,8 @@ class HotSpotAnalysis:
             combo_i_dict = self.hsa_raw_output_dicts[row_i]
 
             combo_i_combination = combo_i_dict["combination"]
-            combo_i_interaction_count = combo_i_dict["interaction_count"]
             combo_i_df = combo_i_dict["df"]
-            combo_i_df_rows = len(combo_i_df)
+            combo_i_df["interaction_count"] = combo_i_dict["interaction_count"]
 
             combo_i_df_obj_func_calcs = lists.find_items(
                 combo_i_df.columns,
@@ -161,14 +171,15 @@ class HotSpotAnalysis:
                 return_matching=False,
             )
 
-            #! Below we transform the keys & values into a dict
+            #! Xform keys & values into a dict, and drop keys & values
             combo_i_df["combo_keys"] = pd.Series(
-                [combo_i_combination] * combo_i_df_rows
+                [combo_i_combination] * len(combo_i_df)
             )
             combo_i_df["combo_values"] = combo_i_df[combo_i_combination].apply(
-                lambda row: list(row.values.astype(str)), axis=1
+                lambda row: list(row.values.astype(str)),
+                axis=1
+                # ??lambda row: list(row.values), axis=1
             )
-
             combo_i_df["combo_dict"] = lists.lists_to_dict(
                 combo_i_df["combo_keys"],
                 combo_i_df["combo_values"],
@@ -179,8 +190,7 @@ class HotSpotAnalysis:
                 inplace=True,
             )
 
-            combo_i_df["interaction_count"] = combo_i_interaction_count
-
+            #! Now we dynamically grab hsa cols & reorder
             hsa_columns = list(
                 # Dynamically grab the HSA columns using sets
                 # NOTE: This preserves the column order
@@ -190,9 +200,9 @@ class HotSpotAnalysis:
             )
             hsa_columns.sort()
 
-            column_order = hsa_columns + combo_i_df_obj_func_calcs
+            column_ordered = hsa_columns + combo_i_df_obj_func_calcs
 
-            combo_i_df_final = combo_i_df[column_order]
+            combo_i_df_final = combo_i_df[column_ordered]
             combo_dfs.append(combo_i_df_final)
 
         hsa_df = pd.concat(combo_dfs).reset_index(drop=True)
@@ -206,14 +216,14 @@ class HotSpotAnalysis:
             # no changes if input data is not grouped
             return
 
-        group_by_dicts: list[dict] = []
+        group_by_dicts = []
         for _, combo_dict_i in enumerate(self.hsa_output_df["combo_dict"]):
             group_by_dict = general.pop_keys(combo_dict_i, self.pre_grouped_vars)
             group_by_dicts.append(group_by_dict)
 
         self.hsa_output_df["group_by_dict"] = group_by_dicts
 
-        # Now reorder the columns so our grouped
+        # Reorder our columns to have our poped group the first column
         all_columns_with_dupes = ["group_by_dict"] + list(self.hsa_output_df.columns)
         all_columns_ordered = lists.unique(all_columns_with_dupes)
         self.hsa_output_df = self.hsa_output_df[all_columns_ordered]
@@ -227,12 +237,13 @@ class HotSpotAnalysis:
         self,
         lag_iterations: int | list[int] = [1],
     ):
+        # NOTE: This lag operations requires hashable, so we convert list(dict) --> JSON, compute the lags & merge, JSON -->  dict(list)
+
         if self.pre_grouped_vars is None:
             return TypeError("Data provided to HSA was not grouped.")
         if isinstance(lag_iterations, int):
             lag_iterations = [lag_iterations]
 
-        # NOTE: This lag operations requires hashable, so we convert list(dict) --> JSON, compute the lags & merge, JSON -->  dict(list)
         df = self.hsa_output_df.copy()
 
         data_grouped_by = ", ".join(self.pre_grouped_vars)
@@ -241,10 +252,10 @@ class HotSpotAnalysis:
         df["combo_dict"] = general.dict_to_json(df["combo_dict"])
 
         # Loop through the lags & merge them back into df
-        df_baseeline = df.copy()
+        df_baseline = df.copy()
         for lag_i in lag_iterations:
             print(f"Running lag: {lag_i}")
-            df_lag_i = df_baseeline.groupby(["combo_dict", "interaction_count"]).shift(
+            df_lag_i = df_baseline.groupby(["combo_dict", "interaction_count"]).shift(
                 lag_i
             )
 
@@ -362,7 +373,7 @@ class HotSpotAnalysis:
 # %%
 
 df_tips = sns.load_dataset("tips")
-numbers = np.arange(10)
+numbers = np.arange(3)
 df_tips_plus = []
 for i, _ in enumerate(numbers):
     scalar = i + 1
@@ -402,7 +413,7 @@ HSA = HotSpotAnalysis(
 # HSA.test_objective_function(verbose=False)
 HSA.run_hsa()
 hsa_data = HSA.export_hsa_output_df()
-
+hsa_data.head()
 
 # %%
 HSA.search_hsa_output(
