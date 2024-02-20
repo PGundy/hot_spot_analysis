@@ -29,21 +29,22 @@ letters = [
 possible_interactions = np.arange(10) + 1
 
 output_dicts = []
-for interaction_max in possible_interactions:
+for interactions in possible_interactions:
     for i, _ in enumerate(letters):
         # if i == 0:
-        #    pass
+        #    next
 
         target_cols = letters[0:i]
         combinations = combos.create_combos(
             target_cols=target_cols,
-            interaction_max=interaction_max,
+            interaction_max=interactions,
         )
 
         output_dict = {
-            "interaction_max": interaction_max,
+            "interactions": interactions,
             "count_target_cols": len(target_cols),
             "count_combinations": len(combinations),
+            "count_combinations_log": np.log(len(combinations)),
             "target_cols": target_cols,
             "combinations": combinations,
         }
@@ -55,28 +56,29 @@ df.info()
 # %%
 
 df_viz = df.copy()
-# df_viz["interaction_max"] = [str(x) for x in df_viz["interaction_max"]]
+# df_viz["interactions"] = [str(x) for x in df_viz["interactions"]]
 px.scatter(
     data_frame=df_viz,
     x="count_target_cols",
-    y="interaction_max",
-    color="interaction_max",
+    y="interactions",
+    color="interactions",
     size="count_combinations",
 )
 
+# %%
 px.line(
     data_frame=df_viz,
     x="count_target_cols",
     y="count_combinations",
     log_y=True,
-    color="interaction_max",
+    color="interactions",
     # size="count_combinations",
 )
 # %%
 
 px.line(
-    data_frame=df_viz[df.count_target_cols >= df.interaction_max],
-    x="interaction_max",
+    data_frame=df_viz[df.count_target_cols >= df.interactions],
+    x="interactions",
     y="count_combinations",
     # log_x=True,
     color="count_target_cols",
