@@ -51,13 +51,11 @@ def _string_to_list(string: str):
     return string.split(delimiter)
 
 
-def list1_in_list2(
-    list1: list, list2: list, return_non_matches: bool = None
-):
+def list1_in_list2(list1: list, list2: list, return_non_matches: bool = None):
     """
     Check if list1 is contained in list2
     """
-    bool_list1_in_list2 = [col in list2 for col in list1]
+    bool_list1_in_list2 = [ele in list2 for ele in list1]
 
     if return_non_matches is None:
         return bool_list1_in_list2
