@@ -220,7 +220,7 @@ class HotSpotAnalysis:
             )
             combo_i_df["combo_values"] = combo_i_df[combo_i_combination].apply(
                 lambda row: list(row.values.astype(str)),
-                axis=1
+                axis=1,
                 # ??lambda row: list(row.values), axis=1
             )
             combo_i_df["combo_dict"] = lists.lists_to_dict(
@@ -311,8 +311,8 @@ class HotSpotAnalysis:
         for dict_column in dict_columns:
             df[dict_column] = general.dict_to_json(df[dict_column])
 
-        # Loop through the lags & merge them back into df
-        df_baseline = df.copy()
+        # Loop through the lags & merge them back into df.
+        df_baseline = df.copy()  # copy() is required to keep the objects separate
         for lag_i in lag_iterations:
             print(f"Running lag: {lag_i}")
             df_lag_i = df_baseline.groupby(["combo_dict", "interaction_count"]).shift(
@@ -324,7 +324,7 @@ class HotSpotAnalysis:
                 how="left",
                 left_index=True,
                 right_index=True,
-                suffixes=["", f"_lag{lag_i}"],
+                suffixes=("", f"_lag{lag_i}"),
             )
 
         for dict_column in dict_columns:
@@ -445,7 +445,7 @@ class HotSpotAnalysis:
 # %%
 
 df_tips = sns.load_dataset("tips")
-numbers = np.arange(5)
+numbers = np.arange(50)
 df_tips_plus = []
 for i, _ in enumerate(numbers):
     scalar = i + 1
@@ -493,7 +493,7 @@ HSA.search_hsa_output(
     search_terms="Thur",
     search_across="values",
     search_type="any",
-    interactions=[1, 2, 3],
+    interactions=[1, 2],
 ).head()
 
 # %%
