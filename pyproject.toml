@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hot-spot-analysis"
-version = "0.1.4"
+version = "1.0.0"
 description = "Compute metrics across combinations of features. Stop clicking around in tableau."
 authors = ["Philip Gundy <philipgundy@gmail.com>"]
 readme = "README.md"

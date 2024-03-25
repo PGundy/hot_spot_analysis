@@ -1,5 +1,7 @@
-# Workflow For Poetry (repo -> Pypi)
+# **ALL OF THIS IS OUT OF DATE AND BASICALLY USELESS**
 
+
+# Workflow For Poetry (repo -> Pypi)
 This is Philip Gundy's notes on his personal (imperfect) workflow with poetry.
 
 ## Key Files
@@ -26,7 +28,7 @@ This is Philip Gundy's notes on his personal (imperfect) workflow with poetry.
     1.  Ensure environment variables are working:
         1.  `$TEST_PYPI_USERNAME` & `$TEST_PYPI_PASSWORD`
             1.  `export TEST_PYPI_USERNAME=pgundy93_test`
-            2. NOTE: PASSWORD is an API token! `export TEST_PYPI_PASSWORD=1HSAteat!`
+            2. NOTE: PASSWORD is an API token! `export TEST_PYPI_PASSWORD=` <-- see keychain
 12. run `poetry publish -r testpypi --username $TEST_PYPI_USERNAME --password $TEST_PYPI_PASSWORD --build` <- BIG STEP
     1.  Check PyPi test: `https://test.pypi.org/project/hot-spot-analysis/`
 
