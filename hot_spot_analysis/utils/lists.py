@@ -1,6 +1,7 @@
 """
 Functions to handle list manipulations
 """
+
 import pandas as pd
 
 
@@ -104,4 +105,4 @@ list_of_dicts2 = [{"c": 3, "d": 4}, {"z": 30, "w": 40}]
 
 result_list_of_dicts = zip_lists_of_dicts(list_of_dicts1, list_of_dicts2)
 
-print(result_list_of_dicts)
+# print(result_list_of_dicts)
