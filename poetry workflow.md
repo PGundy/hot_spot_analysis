@@ -1,5 +1,7 @@
-# Workflow For Poetry (repo -> Pypi)
+# **ALL OF THIS IS OUT OF DATE AND BASICALLY USELESS**
 
+
+# Workflow For Poetry (repo -> Pypi)
 This is Philip Gundy's notes on his personal (imperfect) workflow with poetry.
 
 ## Key Files
