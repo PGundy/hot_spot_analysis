@@ -1,14 +1,12 @@
-# %%
 from dataclasses import dataclass
 from typing import Callable
 
 import numpy as np
 import pandas as pd
-import seaborn as sns
-from utils import combos, demo, general, grouped_df, lists
+
+from .utils import combos, general, grouped_df, lists
 
 
-# %%
 @dataclass
 class HotSpotAnalysis:
     """
@@ -214,9 +212,7 @@ class HotSpotAnalysis:
             )
 
             #! Xform keys & values into a dict, and drop keys & values
-            combo_i_df["combo_keys"] = pd.Series(
-                [combo_i_combination] * len(combo_i_df)
-            )
+            combo_i_df["combo_keys"] = pd.Series([combo_i_combination] * len(combo_i_df))
             combo_i_df["combo_values"] = combo_i_df[combo_i_combination].apply(
                 lambda row: list(row.values.astype(str)),
                 axis=1,
@@ -265,9 +261,7 @@ class HotSpotAnalysis:
             pop_key = self.time_period
             pop_dict = "time_period_dict"
         else:
-            raise ValueError(
-                "Invalid pop_type. Must be either: 'grouped_by' or 'time_period'"
-            )
+            raise ValueError("Invalid pop_type. Must be either: 'grouped_by' or 'time_period'")
 
         popped_dicts = []
         for _, combo_dict_i in enumerate(self.hsa_output_df["combo_dict"]):
@@ -314,9 +308,7 @@ class HotSpotAnalysis:
         df_baseline = df.copy()  # copy() is required to keep the objects separate
         for lag_i in lag_iterations:
             print(f"Running lag: {lag_i}")
-            df_lag_i = df_baseline.groupby(["combo_dict", "interaction_count"]).shift(
-                lag_i
-            )
+            df_lag_i = df_baseline.groupby(["combo_dict", "interaction_count"]).shift(lag_i)
 
             df = df.merge(
                 df_lag_i,
@@ -333,9 +325,7 @@ class HotSpotAnalysis:
 
     def export_hsa_output_df(self):
         if self.hsa_output_df.empty:
-            raise ValueError(
-                "hsa_output_df is not defined. Try: running run_hsa() then use this command."
-            )
+            raise ValueError("hsa_output_df is not defined. Try: running run_hsa() then use this command.")
         return self.hsa_output_df
 
     def search_hsa_output(
@@ -347,9 +337,8 @@ class HotSpotAnalysis:
         interactions: int | list[int] = [0],  # default defined below
         n_row_minimum: int = 0,
     ):
-        # TODO: add check to see if 'self.hsa_output_df' is defined.
         if hsa_df.empty:
-            if HSA.hsa_output_df.empty:
+            if self.hsa_output_df.empty:
                 raise UserWarning("You must first run: run_hsa()")
             hsa_df = self.hsa_output_df.copy()
 
@@ -359,10 +348,7 @@ class HotSpotAnalysis:
             # default to all possible interactions
             interactions = list(np.arange(self.interaction_limit) + 1)
 
-        df = hsa_df[
-            (hsa_df["interaction_count"].isin(interactions))
-            & (hsa_df["n_rows"] >= n_row_minimum)
-        ].copy()
+        df = hsa_df[(hsa_df["interaction_count"].isin(interactions)) & (hsa_df["n_rows"] >= n_row_minimum)].copy()
         df.reset_index(inplace=True, drop=True)
 
         has_grouped_by_dict = "grouped_by_dict" in df.columns
@@ -370,13 +356,9 @@ class HotSpotAnalysis:
 
         df["hsa_dict"] = df["combo_dict"]
         if has_grouped_by_dict:
-            df["hsa_dict"] = lists.zip_lists_of_dicts(
-                df["grouped_by_dict"], df["hsa_dict"]
-            )
+            df["hsa_dict"] = lists.zip_lists_of_dicts(df["grouped_by_dict"], df["hsa_dict"])
         if has_time_period_dict:
-            df["hsa_dict"] = lists.zip_lists_of_dicts(
-                df["time_period_dict"], df["hsa_dict"]
-            )
+            df["hsa_dict"] = lists.zip_lists_of_dicts(df["time_period_dict"], df["hsa_dict"])
 
         if isinstance(search_terms, str):
             search_terms = [search_terms]
@@ -402,10 +384,7 @@ class HotSpotAnalysis:
         if search_type == "all":
             search_results_bool = [search_terms == sorted(x) for x in search_vector]
         else:
-            search_results_interim = [
-                lists.find_items(search_terms, x, return_bools=True)
-                for x in search_vector
-            ]
+            search_results_interim = [lists.find_items(search_terms, x, return_bools=True) for x in search_vector]
             search_results_bool = [any(x) for x in search_results_interim]
 
         search_results = df[search_results_bool]
@@ -439,47 +418,3 @@ class HotSpotAnalysis:
                 + f"n_row_minimum: {n_row_minimum}"
             )
             raise ValueError(search_failed_helper)
-
-
-# %%
-
-
-df_tips = demo.data_stacker(
-    # Here we artificially create more rows
-    df=sns.load_dataset("tips"),
-    stack_count=50,
-)
-
-df_tips.info()
-
-#! Feature construction + aggregation function!
-df_tips["tip_perc"] = df_tips["tip"] / df_tips["total_bill"]
-
-
-def tip_stats(data: pd.DataFrame) -> pd.DataFrame:
-    """fake"""
-    tmp = data.agg(
-        #!count_tips=pd.NamedAgg("tip", "count"),
-        avg_tips=pd.NamedAgg("tip", "mean"),
-        avg_tip_perc=pd.NamedAgg("tip_perc", "mean"),
-    ).round(2)
-
-    return tmp
-
-
-HSA = HotSpotAnalysis(
-    data=df_tips,
-    # data=df_tips_plus.groupby("sex", observed=True),
-    target_cols=["day", "smoker", "size"],
-    time_period=["timestamp"],
-    interaction_limit=3,
-    objective_function=tip_stats,
-)
-
-# HSA.prep_analysis()
-# HSA.test_objective_function(verbose=False)
-HSA.run_hsa()
-hsa_data = HSA.export_hsa_output_df()
-hsa_data.head()
-
-# %%
