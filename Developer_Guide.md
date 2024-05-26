@@ -27,7 +27,6 @@ This governs the project's version, required dependancies, etc.
 1. Dependancies should be using `>=`
 2. Dependancies should be using the oldest compatible version as possible
 
-
 ### 3. locally test the package
 
 `python -m build`
