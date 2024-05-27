@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hot-spot-analysis"
-version = "1.0.1"
+version = "1.0.2"
 description = "Write e metric function, and find hot spots across your viable features."
 readme = "README.md"
 license = { text = "MIT" }

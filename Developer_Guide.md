@@ -35,8 +35,12 @@ This governs the project's version, required dependancies, etc.
 `pytest`
 
 
-### 4. upload to pypi
+### 4. upload to test pypi
  *ONLY DO THIS AFTER RUNNING TESTS & CONFIRMING FUNCTIONALITY*
 `pip install twine`
+
+`python3 -m twine upload --repository testpypi dist/*`
+`python3 -m pip install --index-url https://test.pypi.org/simple/ --no-deps example-package-YOUR-USERNAME-HERE`
+
 `twine upload dist/*`
 

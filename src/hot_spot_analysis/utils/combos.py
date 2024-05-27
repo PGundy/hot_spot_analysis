@@ -1,39 +1,25 @@
-"""
-functions that handle the combinations to reduce code complexity elsewhere
-"""
 import itertools
+from typing import List
 
-import numpy as np
 
-
-def create_combos(target_cols: list[str], interaction_max: int = 3):
-    """Build the combinations of target_cols for 0->interaction_max
+def create_combos(target_cols: List[str], interaction_max: int = 3) -> List[List[str]]:
+    """Build combinations of target_cols for interactions from 0 to interaction_max.
 
     Args:
-        target_cols (list[str]): _description_
-        interaction_max (int, optional): limits interactions. Defaults to 3.
+        target_cols (List[str]): List of column names to combine.
+        interaction_max (int, optional): Maximum number of interactions. Defaults to 3.
 
     Returns:
-        list[str]: target_cols for combination lengths 0->interaction_max
+        List[List[str]]: List of combinations of target_cols for interaction lengths from 0 to interaction_max.
     """
-    combos_nested = []  # 1 layer more nested than combos_final
-    combos_final: list[list[str]] = []
+    combos_final: List[List[str]] = []
 
-    def combo_interaction_i(interactions: int):
-        """
-        Build combos with 1->X interactions
-        """
-        combo_interim = []
-        for combo in itertools.combinations(target_cols, interactions):
-            combo_interim.append(list(combo))
-        return combo_interim
+    # Helper function to generate combinations with a specified number of interactions
+    def generate_combinations(interactions: int) -> List[List[str]]:
+        return [list(combo) for combo in itertools.combinations(target_cols, interactions)]
 
-    for interaction_i in np.arange(interaction_max) + 1:
-        # Build combinations up through the interaction max
-        combos = combo_interaction_i(interaction_i)
-        combos_nested.append(combos)
+    # Generate combinations for each interaction level up to interaction_max
+    for interaction_i in range(1, interaction_max + 1):
+        combos_final.extend(generate_combinations(interaction_i))
 
-    # Now convert the
-
-    combos_final = list(itertools.chain.from_iterable(combos_nested))
     return combos_final
