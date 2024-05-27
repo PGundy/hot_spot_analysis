@@ -4,7 +4,7 @@ from typing import Callable
 import numpy as np
 import pandas as pd
 
-from .utils import combos, general, grouped_df, lists
+from hot_spot_analysis.utils import combos, general, grouped_df, lists
 
 
 @dataclass

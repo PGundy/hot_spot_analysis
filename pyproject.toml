@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "hot-spot-analysis"
 version = "1.0.3"
-description = "Write e metric function, and find hot spots across your viable features."
+description = "Write a python function to calculate your metric(s), and run it over all clusters in your data. Find the cuts of the data driving your metrics."
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name="Philip Gundy", email="PhilipGundy@gmail.com" }]
@@ -21,12 +21,15 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/yourusername/hot_spot_analysis"
-"Source" = "https://github.com/yourusername/hot_spot_analysis"
-"Tracker" = "https://github.com/yourusername/hot_spot_analysis/issues"
+"Homepage" = "https://github.com/pgundy/hot_spot_analysis"
+"Source" = "https://github.com/pgundy/hot_spot_analysis"
+"Tracker" = "https://github.com/pgundy/hot_spot_analysis/issues"
 
 [project.scripts]
 hot_spot_analysis = "hot_spot_analysis.hot_spot_analysis:HotSpotAnalysis"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package_data]
+"hot_spot_analysis" = ["data/*.csv"]
