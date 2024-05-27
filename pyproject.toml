@@ -4,13 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hot-spot-analysis"
-version = "1.0.3"
+version = "1.0.3.a"
 description = "Write a python function to calculate your metric(s), and run it over all clusters in your data. Find the cuts of the data driving your metrics."
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name="Philip Gundy", email="PhilipGundy@gmail.com" }]
 dependencies = [
-    'importlib-metadata; python_version<"3.10"',
     "pandas >= 1.3.5",
     "numpy >= 1.21",
 ]
@@ -31,5 +30,5 @@ hot_spot_analysis = "hot_spot_analysis.hot_spot_analysis:HotSpotAnalysis"
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools.package_data]
+[tool.setuptools.package-data]
 "hot_spot_analysis" = ["data/*.csv"]

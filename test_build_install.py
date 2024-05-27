@@ -7,6 +7,9 @@ from pip._internal.cli.main import main as pip_main
 
 import build
 
+#! Important suggestion during development/upgrading the package
+# NOTE: you should run `pip uninstall hot-spot-analysis` in order to have a clean install
+
 
 class PackageBuilder:
     def __init__(self, project_dir="."):
@@ -37,9 +40,7 @@ class PackageBuilder:
 
             # Install the first wheel file found
             wheel_file = wheel_files[0]
-            #!
-            # NOTE: You must uninstall the package in the terminal if you advanced past the current version!
-            #!
+            # NOTE: you should run `pip uninstall hot-spot-analysis` in order to have a clean install
             print("\n\n\n\n")
             print(f"Attempting to install: {wheel_file}")
             pip_main(["install", wheel_file])
@@ -69,11 +70,18 @@ if __name__ == "__main__":
     # Create an instance of PackageBuilder
     builder = PackageBuilder()
 
-    # Step 1: Build the package
+    # Step 0: Maybe uninstall the package?
+    """zsh
+    cd hot_spot_analysis              # Go to the package's root
+    pyenv activate py3_10             # Activate your venv
+    pip uninstall hot-spot-analysis   # Uninstall the package for a fresh start
+    """
+
+    # Step 1: Run the tests
+    builder.run_tests()
+
+    # Step 2: Build the package
     builder.build_package()
 
-    # Step 2: Install the wheel file
+    # Step 3: Install the wheel file
     builder.install_wheel()
-
-    # Step 3: Run the tests
-    builder.run_tests()
