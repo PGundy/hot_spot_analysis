@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hot-spot-analysis"
-version = "1.0.3a"
+version = "1.0.4a"
 description = "Write a python function to calculate your metric(s), and run it over all clusters in your data. Find the cuts of the data driving your metrics."
 readme = "README.md"
 license = { text = "MIT" }
