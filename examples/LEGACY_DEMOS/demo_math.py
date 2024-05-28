@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.express as px
 import seaborn as sns
 
-from utils import combos, lists
+from hot_spot_analysis.utils import combos
 
 # %%
 

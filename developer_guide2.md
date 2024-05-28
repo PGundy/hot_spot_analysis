@@ -91,7 +91,7 @@ twine upload --repository testpypi dist/*
 
 2. Install from test.pypi
 ```zsh
-python3 -m python3 -m pip install -i https://test.pypi.org/simple/ hot-spot-analysis
+python3 -m pip install -i https://test.pypi.org/simple/ hot-spot-analysis
 ```
 
 
