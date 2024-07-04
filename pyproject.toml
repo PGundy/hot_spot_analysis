@@ -27,6 +27,9 @@ classifiers = [
 [project.scripts]
 hot_spot_analysis = "hot_spot_analysis.hot_spot_analysis:HotSpotAnalysis"
 
+[tool.setuptools]
+package-dir = { "" = "src" }
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
