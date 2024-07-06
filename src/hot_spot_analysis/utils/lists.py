@@ -4,6 +4,8 @@ Functions to handle list manipulations
 
 from typing import Any, List, Union
 
+import pandas as pd
+
 
 def remove_none(lst: List[Union[object, None]]) -> List[object]:
     """
@@ -18,7 +20,7 @@ def remove_none(lst: List[Union[object, None]]) -> List[object]:
     return [x for x in lst if x is not None]
 
 
-def unique(lst: List[object], drop_none: bool = False) -> List[object]:
+def unique(lst: List[Any], drop_none: bool = False) -> List[Any]:
     """
     Deduplicate a list while preserving the original order.
 
@@ -37,8 +39,8 @@ def unique(lst: List[object], drop_none: bool = False) -> List[object]:
 
 
 def find_items(
-    list1: List[object], list2: List[object], return_matching: bool = True, return_bools: bool = False
-) -> List[Union[object, bool]]:
+    list1: List[Any], list2: List[Any], return_matching: bool = True, return_bools: bool = False
+) -> List[Any]:
     """
     Find matching or non-matching items between two lists.
 
@@ -78,7 +80,7 @@ def lists_to_dict(
     return list_of_zipped_dicts
 
 
-def zip_lists_of_dicts(list1: List[dict], list2: List[dict]) -> List[dict]:
+def zip_lists_of_dicts(list1: Union[List[dict], pd.Series], list2: Union[List[dict], pd.Series]) -> List[dict]:
     """
     Zip two lists of dictionaries together.
 

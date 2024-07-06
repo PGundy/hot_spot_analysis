@@ -1,4 +1,11 @@
 import pandas as pd
+import seaborn as sns
+
+"""
+
+Some functions to make demo-ing HotSpotAnalyzer easier
+
+"""
 
 
 def data_stacker(df: pd.DataFrame, stack_count: int = 10) -> pd.DataFrame:
@@ -27,3 +34,11 @@ def data_stacker(df: pd.DataFrame, stack_count: int = 10) -> pd.DataFrame:
     df_stacked = pd.concat(df_stacks)
 
     return df_stacked
+
+
+def build_demo_df_from_sns_datasets(sns_dataset="tips", stack_count: int = 10):
+    df_demo = data_stacker(
+        df=sns.load_dataset(sns_dataset),
+        stack_count=stack_count,
+    )
+    return df_demo

@@ -1,17 +1,26 @@
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Union
 
 import numpy as np
 import pandas as pd
 
-from hot_spot_analysis.utils import combos, general, grouped_df, lists
+from hot_spot_analysis.utils import combos, demo, general, grouped_df, lists
 
 
 @dataclass
-class HotSpotAnalysis:
-    """
-    _summary_ TODO
-    fdsfsd
+class HotSpotAnalyzer:
+    """HotSpotAnalyzer will help you find hotspots within your data by letting you easily drill down into your data.
+
+    Attributes:
+    -----------
+    data : pd.DataFrame
+        The dataset to be analyzed. Defaults to an empty DataFrame.
+    target_cols : list[str]
+        The target columns within the dataset to focus the analysis on.
+    interaction_limit : int
+        The maximum number of interactions to consider during the analysis.
+    objective_function : Callable
+        A function to evaluate the objective of the analysis.
     """
 
     data: pd.DataFrame
@@ -25,23 +34,23 @@ class HotSpotAnalysis:
         target_cols: list = [None],  # []
         time_period: list = [None],  # []
         interaction_limit: int = 3,  # 3
-        objective_function: Callable = None,
+        objective_function: Callable = None,  # type: ignore
     ):
         self.data_input = data
-        self.target_cols = lists.unique(target_cols, drop_none=True)
+        self.target_cols = lists.unique(target_cols, drop_none=True)  # type: ignore
         self.time_period = lists.unique(time_period, drop_none=True)
         self.interaction_limit = interaction_limit
         self.objective_function = objective_function
 
         # Set defaults for variables set via functions
-        self.grouped_by: list[str] = None
+        self.grouped_by: list[str] = None  # type: ignore
         self.data_prep: pd.DataFrame = pd.DataFrame(None)
-        self.combinations: list[list[str]] = None
+        self.combinations: list[list[str]] = None  # type: ignore
         self.obj_func_tested: bool = False
-        self.hsa_raw_output_dicts: list[dict] = None
+        self.hsa_raw_output_dicts: list[dict] = None  # type: ignore
         self.hsa_output_df: pd.DataFrame = pd.DataFrame(None)
 
-    def prep_class(self):
+    def _prep_class(self):
         """Extract any groups & the dataframe from the init"""
         self.data_prep = grouped_df.return_data(self.data_input)
 
@@ -49,7 +58,18 @@ class HotSpotAnalysis:
             self.grouped_by = grouped_df.get_groups(self.data_input)
 
     def _validate_input(self, validate=None):
-        """Check if the target_cols are found in the input data."""
+        """Check if the target_cols are found in the input data.
+
+        Parameters:
+        -----------
+        validate : str, optional
+            The input type to validate, either 'target_cols' or 'time_period'.
+
+        Raises:
+        -------
+        ValueError
+            If the input columns are not found in the data_prep dataframe.
+        """
 
         if validate == "target_cols":
             input_to_validate = self.target_cols
@@ -60,7 +80,7 @@ class HotSpotAnalysis:
         else:
             raise ValueError("validate must be either: 'target_cols' or 'time_period")
 
-        valid_inputs = self.data_prep.columns
+        valid_inputs = list(self.data_prep.columns)
 
         valid_columns_bools = lists.find_items(
             input_to_validate,
@@ -83,9 +103,9 @@ class HotSpotAnalysis:
             raise ValueError(error)
 
     def _build_combos(self):
-        """fake doc string"""
+        """Build combinations of the target columns and other grouping variables."""
         if self.data_prep.empty:
-            self.prep_class()
+            self._prep_class()
 
         combinations = combos.create_combos(
             target_cols=self.target_cols,
@@ -114,9 +134,9 @@ class HotSpotAnalysis:
         )
 
     def _build_data(self):
-        """fake doc string"""
+        """Prepare the data for analysis by validating inputs and adding necessary columns."""
         if self.data_prep.empty:
-            self.prep_class()
+            self._prep_class()
 
         self._validate_input("target_cols")
         self._validate_input("time_period")
@@ -129,7 +149,20 @@ class HotSpotAnalysis:
         row_limit: int = 100,
         verbose: bool = True,
     ):
-        """check if the objective function even works"""
+        """Test if the objective function works with the data.
+
+        Parameters:
+        -----------
+        row_limit : int, optional
+            The number of rows to sample for testing. Defaults to 100.
+        verbose : bool, optional
+            If True, prints additional information during testing. Defaults to True.
+
+        Raises:
+        -------
+        ValueError
+            If the objective function is not compatible with the grouped data frame.
+        """
         if self.data_prep.empty:
             self._build_data()
 
@@ -151,15 +184,16 @@ class HotSpotAnalysis:
         if verbose:
             return output
 
-    def prep_analysis(self):
-        """fake doc string"""
+    def _prep_analysis(self):
+        """Prepare the data and combinations for analysis, and test the objective function."""
         self._build_data()
         self._build_combos()
         if not self.obj_func_tested:
             self.test_objective_function(verbose=False)
 
-    def run_obj_func_iterations(self):
-        self.prep_analysis()
+    def _run_obj_func_iterations(self):
+        """Run the objective function across all combinations of the data."""
+        self._prep_analysis()
 
         if self.hsa_raw_output_dicts is not None:
             print("The objective function has already been run.")
@@ -171,7 +205,7 @@ class HotSpotAnalysis:
             df_grp_by_combo = self.data_prep.groupby(combo, observed=True)
             df_combo_output = self.objective_function(df_grp_by_combo)
 
-            df_grp_nrows = df_grp_by_combo.size().reset_index(name="n_rows")
+            df_grp_nrows = df_grp_by_combo.size().reset_index(name="n_rows")  # type: ignore
 
             combination_output_df = df_grp_nrows.merge(df_combo_output, on=combo)
 
@@ -189,13 +223,14 @@ class HotSpotAnalysis:
         print("\n")
         self.hsa_raw_output_dicts = combination_outputs
 
-    def process_hsa_raw_output_dicts(self):
+    def _process_hsa_raw_output_dicts(self):
+        """Process the raw output dictionaries to create the final HSA output dataframe."""
         if not self.hsa_output_df.empty:
             print("The HSA data output already exsists.")
             return
 
         if self.hsa_raw_output_dicts is None:
-            self.run_obj_func_iterations()
+            self._run_obj_func_iterations()
 
         combo_dfs = []
         for row_i, _ in enumerate(self.hsa_raw_output_dicts):
@@ -246,9 +281,19 @@ class HotSpotAnalysis:
         hsa_df = pd.concat(combo_dfs).reset_index(drop=True)
         self.hsa_output_df = hsa_df
 
-    def pop_key_off_combo_dict(self, pop_type=None):
-        #!! move into process_hsa_raw_output_dicts() at end
-        # TODO: once moved add a condition that the following var is not None
+    def _pop_key_off_combo_dict(self, pop_type=None):
+        """Pop a key off the combination dictionary.
+
+        Parameters:
+        -----------
+        pop_type : str, optional
+            The type of key to pop, either 'grouped_by' or 'time_period'.
+
+        Raises:
+        -------
+        ValueError
+            If the pop_type is not 'grouped_by' or 'time_period'.
+        """
 
         if pop_type == "grouped_by":
             if self.grouped_by is None:
@@ -276,16 +321,34 @@ class HotSpotAnalysis:
         self.hsa_output_df = self.hsa_output_df[all_columns_ordered]
 
     def run_hsa(self):
-        self.process_hsa_raw_output_dicts()
-        self.pop_key_off_combo_dict(pop_type="grouped_by")
-        self.pop_key_off_combo_dict(pop_type="time_period")
+        """Process all inputs, and then run HotSpotAnalyzer."""
+        self._process_hsa_raw_output_dicts()
+        self._pop_key_off_combo_dict(pop_type="grouped_by")
+        self._pop_key_off_combo_dict(pop_type="time_period")
         print("HSA has been run & the output has been processed.")
 
     def lag_hsa_by_time_period(
         self,
-        lag_iterations: int | list[int] = [1],
-    ):
-        #!!! TODO change this to ONLY work on 'time_period'!
+        lag_iterations: Union[int, list[int]] = [1],
+    ) -> pd.DataFrame:
+        """Lag the HSA output by the specified time period to see time trends.
+
+        Parameters:
+        -----------
+        lag_iterations : Union[int, list[int]], optional
+            The number of lag iterations to apply. Defaults to [1].
+
+        Returns:
+        --------
+        pd.DataFrame
+            The lagged HSA output dataframe.
+
+        Raises:
+        -------
+        TypeError
+            If the data provided to HSA was not grouped.
+        """
+
         # NOTE: This lag operations requires hashable, so we convert list(dict) --> JSON, compute the lags & merge, JSON -->  dict(list)
 
         if not self.time_period:
@@ -302,7 +365,7 @@ class HotSpotAnalysis:
         if self.grouped_by is not None:
             dict_columns = ["grouped_by_dict"] + dict_columns
         for dict_column in dict_columns:
-            df[dict_column] = general.dict_to_json(df[dict_column])
+            df[dict_column] = general.dict_to_json(df[dict_column])  # type: ignore
 
         # Loop through the lags & merge them back into df.
         df_baseline = df.copy()  # copy() is required to keep the objects separate
@@ -319,11 +382,23 @@ class HotSpotAnalysis:
             )
 
         for dict_column in dict_columns:
-            df[dict_column] = general.json_to_dict(df[dict_column])
+            df[dict_column] = general.json_to_dict(df[dict_column])  # type: ignore
 
         return df
 
-    def export_hsa_output_df(self):
+    def export_hsa_output_df(self) -> pd.DataFrame:
+        """Export the HSA output dataframe.
+
+        Returns:
+        --------
+        pd.DataFrame
+            The HSA output dataframe.
+
+        Raises:
+        -------
+        ValueError
+            If the HSA output dataframe is not defined.
+        """
         if self.hsa_output_df.empty:
             raise ValueError("hsa_output_df is not defined. Try: running run_hsa() then use this command.")
         return self.hsa_output_df
@@ -331,12 +406,42 @@ class HotSpotAnalysis:
     def search_hsa_output(
         self,
         hsa_df: pd.DataFrame = pd.DataFrame(None),
-        search_terms: str | list[str] = None,
+        search_terms: Union[str, list[str]] = None,  # type: ignore
         search_across: str = "keys",
         search_type: str = "any",
-        interactions: int | list[int] = [0],  # default defined below
+        interactions: Union[int, list[int]] = [0],  # default defined below
         n_row_minimum: int = 0,
-    ):
+    ) -> pd.DataFrame:
+        """Search across the HSA output dataframe for specific keys(columns) or values.
+
+        Parameters:
+        -----------
+        hsa_df : pd.DataFrame, optional
+            The HSA output dataframe to search within. Defaults to an empty DataFrame.
+        search_terms : Union[str, list[str]], optional
+            The terms to search for. Defaults to None.
+        search_across : str, optional
+            Whether to search across 'keys' or 'values'. Defaults to 'keys'.
+        search_type : str, optional
+            The type of search to perform, either 'any' or 'all'. Defaults to 'any'.
+        interactions : Union[int, list[int]], optional
+            The interaction levels to consider during the search. Defaults to [0].
+        n_row_minimum : int, optional
+            The minimum number of rows to include in the search. Defaults to 0.
+
+        Returns:
+        --------
+        pd.DataFrame
+            The search results.
+
+        Raises:
+        -------
+        UserWarning
+            If the HSA output dataframe is not defined.
+        ValueError
+            If the search parameters are invalid or no results are found.
+        """
+
         if hsa_df.empty:
             if self.hsa_output_df.empty:
                 raise UserWarning("You must first run: run_hsa()")

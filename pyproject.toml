@@ -24,9 +24,6 @@ classifiers = [
 "Source" = "https://github.com/pgundy/hot_spot_analysis"
 "Tracker" = "https://github.com/pgundy/hot_spot_analysis/issues"
 
-[project.scripts]
-hot_spot_analysis = "hot_spot_analysis.hot_spot_analysis:HotSpotAnalysis"
-
 [tool.setuptools]
 package-dir = { "" = "src" }
 

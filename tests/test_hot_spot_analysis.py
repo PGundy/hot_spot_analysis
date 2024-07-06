@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from hot_spot_analysis.hot_spot_analysis import HotSpotAnalysis
+from hot_spot_analysis.hot_spot_analysis import HotSpotAnalyzer
 from hot_spot_analysis.utils import demo
 
 # Note: it is advisable to use run the following
@@ -41,7 +41,7 @@ class test_hsa:
 tips_data_for_hsa = test_hsa.create_df_tips()
 print(tips_data_for_hsa.info())
 
-HSA = HotSpotAnalysis(
+HSA = HotSpotAnalyzer(
     data=tips_data_for_hsa,
     target_cols=["day", "smoker", "size"],
     time_period=["fake_ts"],
