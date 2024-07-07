@@ -1,0 +1,6 @@
+# Dev tools
+pytest
+build
+setuptools
+twine
+wheel

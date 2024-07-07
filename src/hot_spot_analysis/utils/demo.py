@@ -1,5 +1,8 @@
+import os
+import subprocess
+from pathlib import Path
+
 import pandas as pd
-import seaborn as sns
 
 """
 
@@ -36,9 +39,39 @@ def data_stacker(df: pd.DataFrame, stack_count: int = 10) -> pd.DataFrame:
     return df_stacked
 
 
-def build_demo_df_from_sns_datasets(sns_dataset="tips", stack_count: int = 10):
-    df_demo = data_stacker(
-        df=sns.load_dataset(sns_dataset),
-        stack_count=stack_count,
-    )
-    return df_demo
+def get_repo_root():
+    try:
+        # Run the git command to get the top-level directory of the repository
+        repo_root = subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).strip().decode("utf-8")
+        return Path(repo_root)
+    except subprocess.CalledProcessError:
+        raise RuntimeError("This is not a git repository.")
+
+
+def build_demo_data_from_local_data(file_name="tips_dataset.csv", stack_count: int = 10):
+    root_dir = get_repo_root()
+    data_folder_dir = os.path.join(root_dir, "data")
+    file_path = os.path.join(data_folder_dir, file_name)
+
+    if os.path.exists(file_path):
+        return data_stacker(pd.read_csv(file_path), stack_count)
+    else:
+        available_files = os.listdir(data_folder_dir)
+        regex = "\n\t"
+        raise FileNotFoundError(
+            f"File '{file_name}' not found in {data_folder_dir}. Available files: {regex+regex.join(available_files)}"
+        )
+
+
+class tips:
+    def build_df(self, stack_count=10) -> pd.DataFrame:
+        df_tips = build_demo_data_from_local_data(stack_count=stack_count)
+        df_tips["tip_perc"] = df_tips["tip"] / df_tips["total_bill"]
+        return df_tips
+
+    def calc_tip_stats(self, data: pd.DataFrame) -> pd.DataFrame:
+        df_agg = data.agg(
+            avg_tips=pd.NamedAgg("tip", "mean"),
+            avg_tip_perc=pd.NamedAgg("tip_perc", "mean"),
+        ).round(2)
+        return df_agg

@@ -1,9 +1,0 @@
-# Dev tools
-setuptools
-wheel
-twine
-pytest
-
-# package requirements
-pandas
-numpy

@@ -5,7 +5,7 @@ import pandas as pd
 from hot_spot_analysis.hot_spot_analysis import HotSpotAnalyzer
 from hot_spot_analysis.utils import demo
 
-df_tips = demo.build_demo_df_from_sns_datasets("tips")
+df_tips = demo.build_demo_data_from_local_data("tips_dataset.csv")
 df_tips["tip_perc"] = df_tips["tip"] / df_tips["total_bill"]
 df_tips.info()
 

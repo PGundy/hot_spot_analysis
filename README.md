@@ -4,13 +4,14 @@ A brief description of your package.
 
 ## Installation
 
-```sh
+```zsh
 pip install hot-spot-analysis
 ```
 
 ## Python Import
-```sh
-from hot-spot-analysis import hot_spot_analysis
+```python
+from hot_spot_analysis.hot_spot_analysis import HotSpotAnalyzer
+HSA = HotSpotAnalyzer(...)
 ```
 
 # Quickstart 
@@ -37,7 +38,7 @@ If we have 3 columns [a, b, c], and we want to cut our data using those columns 
 | C       | Y       | 60    |
 
 ### Example - Simple metric function
-```
+```python
 # Metric function
 def metric_function(group):
     return {
@@ -46,10 +47,10 @@ def metric_function(group):
 ```
 
 ### Example Run HSA
-```
-from hot_spot_analysis.hot_spot_analysis import HotSpotAnalysis
+```python
+from hot_spot_analysis.hot_spot_analysis import HotSpotAnalyzer
 
-HSA = HotSpotAnalysis(
+HSA = HotSpotAnalyzer(
     data=example_data,                  # See above
     target_cols=["column1", "column2"], 
     objective_function=metric_function, # See above
