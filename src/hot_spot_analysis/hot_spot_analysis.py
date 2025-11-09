@@ -246,21 +246,10 @@ class HotSpotAnalyzer:
                 return_matching=False,
             )
 
-            #! Xform keys & values into a dict, and drop keys & values
-            combo_i_df["combo_keys"] = pd.Series([combo_i_combination] * len(combo_i_df))
-            combo_i_df["combo_values"] = combo_i_df[combo_i_combination].apply(
-                lambda row: list(row.values.astype(str)),
+            #! Create combo_dict directly from row data without temporary columns
+            combo_i_df["combo_dict"] = combo_i_df[combo_i_combination].apply(
+                lambda row: dict(zip(combo_i_combination, row.values.astype(str))),
                 axis=1,
-                # ??lambda row: list(row.values), axis=1
-            )
-            combo_i_df["combo_dict"] = lists.lists_to_dict(
-                combo_i_df["combo_keys"],
-                combo_i_df["combo_values"],
-            )
-
-            combo_i_df.drop(
-                columns=["combo_keys", "combo_values"],
-                inplace=True,
             )
 
             #! Now we dynamically grab hsa cols & reorder
