@@ -58,8 +58,4 @@ def add_groups_to_combos(group_vars: list, combos: list[list]) -> list[list]:
     Returns:
     - list[list]: List of combinations with group variables added.
     """
-    combos_plus = []
-    for combo in combos:
-        combo_plus = group_vars + combo
-        combos_plus.append(combo_plus)
-    return combos_plus
+    return [group_vars + combo for combo in combos]

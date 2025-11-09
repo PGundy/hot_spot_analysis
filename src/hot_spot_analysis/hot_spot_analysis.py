@@ -297,12 +297,10 @@ class HotSpotAnalyzer:
         else:
             raise ValueError("Invalid pop_type. Must be either: 'grouped_by' or 'time_period'")
 
-        popped_dicts = []
-        for _, combo_dict_i in enumerate(self.hsa_output_df["combo_dict"]):
-            popped_dict = general.pop_keys(combo_dict_i, pop_key)
-            popped_dicts.append(popped_dict)
-
-        self.hsa_output_df[pop_dict] = popped_dicts
+        self.hsa_output_df[pop_dict] = [
+            general.pop_keys(combo_dict, pop_key)
+            for combo_dict in self.hsa_output_df["combo_dict"]
+        ]
 
         # Reorder columns to have time_period then all others
         all_columns_with_dupes = [pop_dict] + list(self.hsa_output_df.columns)
@@ -464,10 +462,10 @@ class HotSpotAnalyzer:
             raise ValueError(f"'search_type' must be either: {search_types}")
         #! END
 
-        search_vector = []
         if search_across in ["key", "value"]:
             print("Update search_across to 'keys' or 'values'")
             search_across = search_across + "s"
+
         if search_across == "keys":
             search_vector = [list(x.keys()) for x in df["hsa_dict"]]
         elif search_across == "values":
@@ -478,8 +476,10 @@ class HotSpotAnalyzer:
         if search_type == "all":
             search_results_bool = [search_terms == sorted(x) for x in search_vector]
         else:
-            search_results_interim = [lists.find_items(search_terms, x, return_bools=True) for x in search_vector]
-            search_results_bool = [any(x) for x in search_results_interim]
+            search_results_bool = [
+                any(lists.find_items(search_terms, x, return_bools=True))
+                for x in search_vector
+            ]
 
         search_results = df[search_results_bool]
 
