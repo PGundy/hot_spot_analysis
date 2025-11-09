@@ -70,7 +70,7 @@ def lists_to_dict(
     """
     Create dictionaries from two lists and zip them together.
 
-    .. deprecated:: 1.0.4.1
+    .. deprecated:: 1.1.0
         This function is no longer used internally and may be removed in a future version.
         Use list comprehension with dict(zip()) instead:
         ``[dict(zip(keys, values)) for keys, values in zip(keys_column, values_column)]``
