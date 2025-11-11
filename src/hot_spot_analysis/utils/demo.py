@@ -21,22 +21,12 @@ def data_stacker(df: pd.DataFrame, stack_count: int = 10) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Stacked DataFrame.
     """
-    df_stacks = []
+    df_stacks = [
+        pd.concat([df] * i).reset_index(drop=True).assign(fake_ts=i)
+        for i in range(1, stack_count + 1)
+    ]
 
-    for i in range(1, stack_count + 1):
-        # Repeat the DataFrame 'i' times and reset index
-        df_temp = pd.concat([df] * i).reset_index(drop=True)
-
-        # Add a 'timestamp' column with scalar values
-        df_temp["fake_ts"] = i
-
-        # Append the stacked DataFrame to the list
-        df_stacks.append(df_temp)
-
-    # Concatenate all stacked DataFrames into one
-    df_stacked = pd.concat(df_stacks)
-
-    return df_stacked
+    return pd.concat(df_stacks)
 
 
 def get_repo_root():

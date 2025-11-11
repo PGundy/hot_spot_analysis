@@ -2,6 +2,7 @@
 Functions to handle list manipulations
 """
 
+import warnings
 from typing import Any, List, Union
 
 import pandas as pd
@@ -69,6 +70,11 @@ def lists_to_dict(
     """
     Create dictionaries from two lists and zip them together.
 
+    .. deprecated:: 1.1.0
+        This function is no longer used internally and may be removed in a future version.
+        Use list comprehension with dict(zip()) instead:
+        ``[dict(zip(keys, values)) for keys, values in zip(keys_column, values_column)]``
+
     Parameters:
     - keys_column (Union[List[Any], List[List[Any]]]): List of keys.
     - values_column (Union[List[Any], List[List[Any]]]): List of values.
@@ -76,8 +82,14 @@ def lists_to_dict(
     Returns:
     - List[dict]: List of dictionaries formed by zipping keys and values.
     """
-    list_of_zipped_dicts = [dict(zip(keys, values)) for keys, values in zip(keys_column, values_column)]  # type: ignore -- pylance :angry:
-    return list_of_zipped_dicts
+    warnings.warn(
+        "lists_to_dict() is deprecated and will be removed in a future version. "
+        "Use list comprehension with dict(zip()) instead: "
+        "[dict(zip(keys, values)) for keys, values in zip(keys_column, values_column)]",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return [dict(zip(keys, values)) for keys, values in zip(keys_column, values_column)]  # type: ignore -- pylance :angry:
 
 
 def zip_lists_of_dicts(list1: Union[List[dict], pd.Series], list2: Union[List[dict], pd.Series]) -> List[dict]:
