@@ -3,7 +3,7 @@ name = "hot-spot-analysis"
 version = "1.1.0"
 description = "Write a python function to calculate your metric(s), and run it over all clusters in your data. Find the cuts of the data driving your metrics."
 readme = "README.md"
-license = "MIT"
+license = { text = "MIT" }
 authors = [{ name="Philip Gundy", email="PhilipGundy@gmail.com" }]
 requires-python = ">=3.9"
 dependencies = [
@@ -13,7 +13,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "black"
+    "black",
+    "pytest>=8.2.2",
+    "build>=1.2.1",
+    "twine>=6.0.0"
 ]
 
 [project.urls]
@@ -22,13 +25,7 @@ dev = [
 "Tracker" = "https://github.com/pgundy/hot_spot_analysis/issues"
 
 [build-system]
-requires = [
-    "setuptools>=42",
-    "build>=1.2.1",
-    "pytest>=8.2.2",
-    "twine>=5.1.1",
-    "wheel>=0.43.0"
-    ]
+requires = ["setuptools>=68.0.0,<70.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
